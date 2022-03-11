@@ -18,7 +18,7 @@ from keras.models import load_model
 from sklearn.preprocessing import StandardScaler
 
 'Read the file'
-df = pd.read_csv('C:/Users/Abenezer/Documents/1_Summer_2019/Paper/Driver/Data/vehicle2.csv')
+df = pd.read_csv('Datasets/Driving Data(KIA SOUL)_(150728-160714)_(10 Drivers_A-J).csv')
 'Checking the data distribution per class'
 df['Class'].value_counts().plot(kind='bar', title='Number of data point per class',color='C1')
 plt.ylabel('Data Points')
@@ -97,7 +97,8 @@ def label_y(y_value):
 
 
 from sklearn.model_selection import train_test_split
-from keras.utils import to_categorical
+from tensorflow.keras.utils import to_categorical
+# from keras.utils import to_categorical      #does not work
 
 def rnn_dimension(X,y):
     X_samples, y_samples = window(X, y)
