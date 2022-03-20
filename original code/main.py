@@ -16,9 +16,10 @@ import tensorflow as tf
 from tensorflow.python.client import device_lib
 from keras.models import load_model
 from sklearn.preprocessing import StandardScaler
+from keras.utils.vis_utils import plot_model
 
 'Read the file'
-df = pd.read_csv('C:/Users/Abenezer/Documents/1_Summer_2019/Paper/Driver/Data/vehicle2.csv')
+df = pd.read_csv("../Datasets/Driving Data(KIA SOUL)_(150728-160714)_(10 Drivers_A-J).csv")
 'Checking the data distribution per class'
 df['Class'].value_counts().plot(kind='bar', title='Number of data point per class',color='C1')
 plt.ylabel('Data Points')
@@ -27,20 +28,44 @@ plt.xlabel('Classes')
 
 
 def pre_process_encoder(df):
+    print("Original dataframe size: ", df.shape)
+    #mathijs edit
+    #drop to 4 participants
+    df_4 = df[df.Class.isin(['A', 'B', 'C', 'D'])]
+    print("Reduced dataframe size (4 drivers): ", df_4.shape)
+    mapping = {'A': 0, 'B': 1, 'C': 2, 'D': 3}
+    df_4.replace({'Class': mapping})
+    # ik probeer A naar 0 te mappen, B naar 1 etc
+    # lijkt nodig te zijn later, krijg je nu een error van
+    # maar t werkt nog niet
+    print(df_4)
+    # df = df[(df.Class == 'A')]
 
     'Features and label'
     X = df.drop('Class',1)
     y = df.Class
+    print(y)
+
+
+    print("X data shape (features): ", X.shape)
+    print("y data shape (output classes): ", y.shape)
    
     if "Car_Id" in X.columns:
         X.drop('Car_Id', axis=1, inplace=True)
     if 'Trip'in X.columns:
         X.drop('Trip', axis=1, inplace=True)
+
+    #mathijs addition
+    X = np.array(X)
+    X = X[:,:21] #reduce number of features to fit model input layer
+    # dit is ook beetje beun, moeten ws ff goed kiezen welke 21 features we houden
+    # nu zijn t gewoon de eerste 21
         
     return X,y
     
 
 X, y = pre_process_encoder(df)
+
 
 
 'Split the data set into window samples'
@@ -97,11 +122,14 @@ def label_y(y_value):
 
 
 from sklearn.model_selection import train_test_split
-from keras.utils import to_categorical
+from tensorflow.keras.utils import to_categorical
 
 def rnn_dimension(X,y):
     X_samples, y_samples = window(X, y)
     y_samples = label_y(y_samples)
+
+    print("X samples window shape: ", X_samples.shape)
+    print("y samples shape: ", y_samples.shape)
 
     #Shuffling 
     from sklearn.utils import shuffle
@@ -115,8 +143,6 @@ def rnn_dimension(X,y):
     X_train,  y_train = shuffle(X_train_rnn, y_train_rnn)
     
     return X_train, y_train, X_test_rnn, y_test_rnn
-
-
 
 
 X_train_5,y_train_5, X_test_5,y_test_5 = rnn_dimension(X,y)
@@ -139,9 +165,15 @@ def normalizing(X_test):
 
             return X_test_scaled
         
-        
 
-clean_model = load_model('Model_clean_binary_cross_ICTAI_vehicle2_1.h5')
+clean_model = load_model('Model_clean_binary_cross_ICTAI_vehicle2_1')
+clean_model = load_model('Model_FCNN_ICTAI_vehicle2_1')
+print(clean_model.summary())
+print("X_test shape: ", X_test_5.shape)
+print("y_test shape: ", y_test_5.shape)
+print(y_test_5[0,:])
+print(clean_model.predict(np.expand_dims(X_test_5[0,:,:], axis=0)))
+
 
 X_test_normalized = normalizing(X_test_5)
 score = clean_model.evaluate(X_test_normalized, y_test_5, batch_size=50)
@@ -243,6 +275,12 @@ X_train, X_test, y_train, y_test =train_test_split(X, y, train_size=0.85,shuffle
 
 from keras.utils import np_utils 
 from sklearn.preprocessing import StandardScaler
+
+#mathijs beun begint weer
+print(y)
+
+
+print(y)
 y_dummy = np_utils.to_categorical(y)
 
 from keras.models import Sequential
