@@ -19,11 +19,13 @@ from sklearn.preprocessing import StandardScaler
 from keras.utils.vis_utils import plot_model
 
 'Read the file'
-df = pd.read_csv("../Datasets/Driving Data(KIA SOUL)_(150728-160714)_(10 Drivers_A-J).csv")
+# df = pd.read_csv("../Datasets/Driving Data(KIA SOUL)_(150728-160714)_(10 Drivers_A-J).csv")
+# 'Checking the data distribution per class'
+df = pd.read_csv("../Datasets/VehicularData(anonymized).csv")
 'Checking the data distribution per class'
-df['Class'].value_counts().plot(kind='bar', title='Number of data point per class',color='C1')
-plt.ylabel('Data Points')
-plt.xlabel('Classes')
+# df['Class'].value_counts().plot(kind='bar', title='Number of data point per class',color='C1')
+# plt.ylabel('Data Points')
+# plt.xlabel('Classes')
 
 
 
@@ -31,21 +33,31 @@ def pre_process_encoder(df):
     print("Original dataframe size: ", df.shape)
     #mathijs edit
     #drop to 4 participants
-    df_4 = df[df.Class.isin(['A', 'B', 'C', 'D'])]
-    print("Reduced dataframe size (4 drivers): ", df_4.shape)
-    mapping = {'A': 0, 'B': 1, 'C': 2, 'D': 3}
-    df_4 = df_4.replace({'Class': mapping})
+
+        #tom en sander meuk komt nu! :)
+    df = df.iloc[85095:, [1, 10, 11, 12, 13, 14, 16, 19, 20, 22, 26, 27, 29, 31, 32, 33, 35, 36, 38, 40, 41, 42]]
+
+    print(df)
+
+    # df_4 = df[df.Class.isin(['A', 'B', 'C', 'D'])]
+    # print("Reduced dataframe size (4 drivers): ", df_4.shape)
+    # mapping = {'A': 0, 'B': 1, 'C': 2, 'D': 3}
+    # df_4 = df_4.replace({'Class': mapping})
     # ik probeer A naar 0 te mappen, B naar 1 etc
     # lijkt nodig te zijn later, krijg je nu een error van
     # maar t werkt nog niet
-    print(df_4)
+    # print(df_4)
     # df = df[(df.Class == 'A')]
 
-    'Features and label'
-    X = df_4.drop('Class',1)
-    y = df_4.Class
-    print(y)
+    # 'Features and label'
+    # X = df_4.drop('Class',1)
+    # y = df_4.Class
+    # print(y)
 
+    'Features and label'
+    X = df.drop('Person_Id',1)
+    y = df.Person_Id
+    print(y)
 
     print("X data shape (features): ", X.shape)
     print("y data shape (output classes): ", y.shape)
@@ -57,6 +69,7 @@ def pre_process_encoder(df):
 
     #mathijs addition
     X = np.array(X)
+
     X = X[:,:21] #reduce number of features to fit model input layer
     # dit is ook beetje beun, moeten ws ff goed kiezen welke 21 features we houden
     # nu zijn t gewoon de eerste 21
@@ -167,7 +180,7 @@ def normalizing(X_test):
         
 
 clean_model = load_model('Model_clean_binary_cross_ICTAI_vehicle2_1')
-clean_model = load_model('Model_FCNN_ICTAI_vehicle2_1')
+# clean_model = load_model('Model_FCNN_ICTAI_vehicle2_1')
 print(clean_model.summary())
 print("X_train shape: ", X_train_5.shape)
 print("X_test shape: ", X_test_5.shape)
@@ -184,6 +197,7 @@ clean_model.fit(X_train_5, y_train_5, epochs=50, batch_size=100)
 
 print("----- compare ground truth with model")
 print(y_test_5[0,:])
+X_test_5 = np.asarray(X_test_5).astype('float32')
 print(clean_model.predict(np.expand_dims(X_test_5[0,:,:], axis=0)))
 
 
@@ -209,6 +223,7 @@ def LSTM_anomality(X_test_rnn,y_test_rnn ):
 
         def anomality(X, ): 
             orgi_data = np.copy(X_test_5.reshape(-1,21))
+
             mask = np.random.choice( orgi_data.shape[0], int(len(orgi_data)* .5), replace=False)
             # orgi_data[mask].shape
 
@@ -277,6 +292,7 @@ def normalizing_2d(X):
 def anomality_2d(X, anomaly): 
 
     X = np.array(X).reshape(-1,21)
+
     mask = np.random.choice( X.shape[0], int(len(X)* .4), replace=False)
     # orgi_data[mask].shape
 
