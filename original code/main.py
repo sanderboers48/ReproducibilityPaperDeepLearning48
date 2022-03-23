@@ -34,7 +34,7 @@ def pre_process_encoder(df):
     df_4 = df[df.Class.isin(['A', 'B', 'C', 'D'])]
     print("Reduced dataframe size (4 drivers): ", df_4.shape)
     mapping = {'A': 0, 'B': 1, 'C': 2, 'D': 3}
-    df_4.replace({'Class': mapping})
+    df_4 = df_4.replace({'Class': mapping})
     # ik probeer A naar 0 te mappen, B naar 1 etc
     # lijkt nodig te zijn later, krijg je nu een error van
     # maar t werkt nog niet
@@ -42,8 +42,8 @@ def pre_process_encoder(df):
     # df = df[(df.Class == 'A')]
 
     'Features and label'
-    X = df.drop('Class',1)
-    y = df.Class
+    X = df_4.drop('Class',1)
+    y = df_4.Class
     print(y)
 
 
@@ -504,3 +504,4 @@ plt.ylabel("accuracy", fontsize=20)
 # plt.title("Accuracy on noisy data")
 plt.legend(loc=3, fontsize=16)
 #plt.grid()
+plt.show()
