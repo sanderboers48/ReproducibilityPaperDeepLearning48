@@ -169,14 +169,27 @@ def normalizing(X_test):
 clean_model = load_model('Model_clean_binary_cross_ICTAI_vehicle2_1')
 clean_model = load_model('Model_FCNN_ICTAI_vehicle2_1')
 print(clean_model.summary())
+print("X_train shape: ", X_train_5.shape)
 print("X_test shape: ", X_test_5.shape)
+print("y_train shape: ", y_train_5.shape)
 print("y_test shape: ", y_test_5.shape)
+
+print(clean_model.layers[0])
+clean_model.layers[0] = tf.keras.layers.LSTM(32)
+print("----------------------")
+print("training lstm model")
+# clean_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+#               loss=tf.keras.losses.BinaryCrossentropy())
+clean_model.fit(X_train_5, y_train_5, epochs=50, batch_size=100)
+
+print("----- compare ground truth with model")
 print(y_test_5[0,:])
 print(clean_model.predict(np.expand_dims(X_test_5[0,:,:], axis=0)))
 
 
 X_test_normalized = normalizing(X_test_5)
-score = clean_model.evaluate(X_test_normalized, y_test_5, batch_size=50)
+# score = clean_model.evaluate(X_test_normalized, y_test_5, batch_size=50)
+score = clean_model.evaluate(X_test_5, y_test_5, batch_size=50)
 print('Test loss:', score[0])
 print('Test accuracy:', score[1])
 
@@ -227,7 +240,8 @@ def LSTM_anomality(X_test_rnn,y_test_rnn ):
            
             #pd.DataFrame(noising2(X_train.reshape(-1,49)))[1].head(1000).plot(kind='line')
 
-            score_1 = clean_model.evaluate(X_test_rnn_noise_scaled, y_test_rnn, batch_size=50,verbose=0)
+            # score_1 = clean_model.evaluate(X_test_rnn_noise_scaled, y_test_rnn, batch_size=50,verbose=0)
+            score_1 = clean_model.evaluate(X_test_rnn_anomal, y_test_rnn, batch_size=50, verbose=0)
             iter_score.append(score_1[1])
 #             print(score_1[1])
 
@@ -306,6 +320,8 @@ mlp.add(layers.BatchNormalization())
 mlp.add(Dense(y_test.shape[1], activation='softmax'))
 #mlp.add(Dense(1,activation='sigmoid'))
 # mlp.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+print("-----------------------")
+print("train the FCNN")
 mlp.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 with tf.device('/GPU:0'):
@@ -380,6 +396,8 @@ from sklearn import metrics
 def acc_noise_test_dt(X_train, y_train ,X_test , y_test):
     
     dt = DecisionTreeClassifier()
+    print("-----------------------")
+    print("train the Decision Tree")
     dt.fit(X_train,y_train)
 
     acc_noise_test_dt = []
@@ -438,6 +456,8 @@ from sklearn import metrics
 def acc_noise_test_rf(X_train, y_train ,X_test , y_test):
     
     rf = RandomForestClassifier(n_estimators=20)
+    print("-----------------------")
+    print("train the Random Forest")
     rf.fit(X_train, y_train)
 
     acc_noise_test_rf = []
