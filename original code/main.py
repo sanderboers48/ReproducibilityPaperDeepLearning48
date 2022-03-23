@@ -19,49 +19,49 @@ from sklearn.preprocessing import StandardScaler
 from keras.utils.vis_utils import plot_model
 
 'Read the file'
-# df = pd.read_csv("../Datasets/Driving Data(KIA SOUL)_(150728-160714)_(10 Drivers_A-J).csv")
+
 # 'Checking the data distribution per class'
-df = pd.read_csv("../Datasets/VehicularData(anonymized).csv")
+
 'Checking the data distribution per class'
 # df['Class'].value_counts().plot(kind='bar', title='Number of data point per class',color='C1')
 # plt.ylabel('Data Points')
 # plt.xlabel('Classes')
 
-
+MATHIJS = False
+TRAINING = True
+EPOCHS = 100
+if MATHIJS:
+    NUM_FEATURES = 52
+    df = pd.read_csv("../Datasets/Driving Data(KIA SOUL)_(150728-160714)_(10 Drivers_A-J).csv")
+else:
+    NUM_FEATURES = 21
+    df = pd.read_csv("../Datasets/VehicularData(anonymized).csv")
 
 def pre_process_encoder(df):
     print("Original dataframe size: ", df.shape)
-    #mathijs edit
-    #drop to 4 participants
 
-        #tom en sander meuk komt nu! :)
-    df = df.iloc[85095:, [1, 10, 11, 12, 13, 14, 16, 19, 20, 22, 26, 27, 29, 31, 32, 33, 35, 36, 38, 40, 41, 42]]
+    if(MATHIJS):
+        df_4 = df[df.Class.isin(['A', 'B', 'C', 'D'])]
+        print("Reduced dataframe size (4 drivers): ", df_4.shape)
+        mapping = {'A': 0, 'B': 1, 'C': 2, 'D': 3}
+        df_4 = df_4.replace({'Class': mapping})
 
-    print(df)
+        # 'Features and label'
+        X = df_4.drop('Class',1)
+        y = df_4.Class
+        # print(y)
+    else:
+        # tom en sander meuk komt nu! :)
+        df = df.iloc[85095:, [1, 10, 11, 12, 13, 14, 16, 19, 20, 22, 26, 27, 29, 31, 32, 33, 35, 36, 38, 40, 41, 42]]
+        'Features and label'
+        X = df.drop('Person_Id',1)
+        y = df.Person_Id
+        print(y)
 
-    # df_4 = df[df.Class.isin(['A', 'B', 'C', 'D'])]
-    # print("Reduced dataframe size (4 drivers): ", df_4.shape)
-    # mapping = {'A': 0, 'B': 1, 'C': 2, 'D': 3}
-    # df_4 = df_4.replace({'Class': mapping})
-    # ik probeer A naar 0 te mappen, B naar 1 etc
-    # lijkt nodig te zijn later, krijg je nu een error van
-    # maar t werkt nog niet
-    # print(df_4)
-    # df = df[(df.Class == 'A')]
-
-    # 'Features and label'
-    # X = df_4.drop('Class',1)
-    # y = df_4.Class
-    # print(y)
-
-    'Features and label'
-    X = df.drop('Person_Id',1)
-    y = df.Person_Id
-    print(y)
 
     print("X data shape (features): ", X.shape)
     print("y data shape (output classes): ", y.shape)
-   
+
     if "Car_Id" in X.columns:
         X.drop('Car_Id', axis=1, inplace=True)
     if 'Trip'in X.columns:
@@ -70,7 +70,8 @@ def pre_process_encoder(df):
     #mathijs addition
     X = np.array(X)
 
-    X = X[:,:21] #reduce number of features to fit model input layer
+    X = X[:, :NUM_FEATURES] #reduce number of features to fit model input layer
+    # X = X[:, :21]
     # dit is ook beetje beun, moeten ws ff goed kiezen welke 21 features we houden
     # nu zijn t gewoon de eerste 21
         
@@ -139,9 +140,9 @@ from tensorflow.keras.utils import to_categorical
 
 def rnn_dimension(X,y):
     X_samples, y_samples = window(X, y)
-    y_samples = label_y(y_samples)
+    y_samples = label_y(y_samples) #
 
-    print("X samples window shape: ", X_samples.shape)
+    print("X samples window shape: ", X_samples.shape) #(num_windows, samples per window, features per sample)?
     print("y samples shape: ", y_samples.shape)
 
     #Shuffling 
@@ -155,10 +156,11 @@ def rnn_dimension(X,y):
     X_train_rnn, X_test_rnn, y_train_rnn, y_test_rnn =train_test_split(X_samples, y_samples_cat, train_size=0.85)
     X_train,  y_train = shuffle(X_train_rnn, y_train_rnn)
     
-    return X_train, y_train, X_test_rnn, y_test_rnn
+    return X_train, y_train, X_test_rnn, y_test_rnn #train is shuffled, test not
 
 
-X_train_5,y_train_5, X_test_5,y_test_5 = rnn_dimension(X,y)
+X_train_5,y_train_5, X_test_5,y_test_5 = rnn_dimension(X,y) #don't know why _5..?
+# but this X data is 3 dimensional: (windows, sampels per window, features per sample)
 
 
 device_lib.list_local_devices()
@@ -177,7 +179,6 @@ def normalizing(X_test):
             X_test_scaled = X_test_scaled.reshape(-1,dim1,dim2)
 
             return X_test_scaled
-        
 
 clean_model = load_model('Model_clean_binary_cross_ICTAI_vehicle2_1')
 # clean_model = load_model('Model_FCNN_ICTAI_vehicle2_1')
@@ -187,25 +188,47 @@ print("X_test shape: ", X_test_5.shape)
 print("y_train shape: ", y_train_5.shape)
 print("y_test shape: ", y_test_5.shape)
 
-print(clean_model.layers[0])
-clean_model.layers[0] = tf.keras.layers.LSTM(32)
+if MATHIJS:
+    mathijs_model = tf.keras.Sequential()
+    mathijs_model.add(tf.keras.layers.Input(shape=(None,NUM_FEATURES)))
+    mathijs_model.add(tf.keras.layers.LSTM(160, input_shape=(None,NUM_FEATURES), return_sequences=True))
+    mathijs_model.add(tf.keras.layers.BatchNormalization())
+    mathijs_model.add(tf.keras.layers.Dropout(.2))
+    mathijs_model.add(tf.keras.layers.LSTM(120, input_shape=(NUM_FEATURES,)))
+    mathijs_model.add(tf.keras.layers.BatchNormalization())
+    mathijs_model.add(tf.keras.layers.Dropout(.2))
+    mathijs_model.add(tf.keras.layers.Dense(4))
+    mathijs_model.add(tf.keras.layers.Softmax())
+    print(mathijs_model.summary())
+    lstm_model = tf.keras.models.clone_model(mathijs_model)
+else:
+    lstm_model = tf.keras.models.clone_model(clean_model)
+
 print("----------------------")
 print("training lstm model")
-# clean_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
-#               loss=tf.keras.losses.BinaryCrossentropy())
-clean_model.fit(X_train_5, y_train_5, epochs=50, batch_size=100)
+
+lstm_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+                    loss=tf.keras.losses.BinaryCrossentropy(),
+                    metrics=[tf.keras.metrics.BinaryAccuracy()])
+if MATHIJS:
+    lstm_model.fit(X_train_5, y_train_5, epochs=EPOCHS)
+else:
+    if TRAINING:
+        lstm_model.fit(X_train_5, y_train_5, epochs=EPOCHS)
+    else:
+        pass
 
 print("----- compare ground truth with model")
 print(y_test_5[0,:])
 X_test_5 = np.asarray(X_test_5).astype('float32')
-print(clean_model.predict(np.expand_dims(X_test_5[0,:,:], axis=0)))
+print(lstm_model.predict(np.expand_dims(X_test_5[0,:,:], axis=0)))
 
 
 X_test_normalized = normalizing(X_test_5)
 # score = clean_model.evaluate(X_test_normalized, y_test_5, batch_size=50)
-score = clean_model.evaluate(X_test_5, y_test_5, batch_size=50)
+score = lstm_model.evaluate(X_test_5, y_test_5, batch_size=50)
 print('Test loss:', score[0])
-print('Test accuracy:', score[1])
+print('Test accuracy:', score[-1])
 
 
 
@@ -222,7 +245,7 @@ def LSTM_anomality(X_test_rnn,y_test_rnn ):
         print("for anomaly percentage = ",anomaly)
 
         def anomality(X, ): 
-            orgi_data = np.copy(X_test_5.reshape(-1,21))
+            orgi_data = np.copy(X_test_5.reshape(-1,NUM_FEATURES))
 
             mask = np.random.choice( orgi_data.shape[0], int(len(orgi_data)* .5), replace=False)
             # orgi_data[mask].shape
@@ -256,14 +279,16 @@ def LSTM_anomality(X_test_rnn,y_test_rnn ):
             #pd.DataFrame(noising2(X_train.reshape(-1,49)))[1].head(1000).plot(kind='line')
 
             # score_1 = clean_model.evaluate(X_test_rnn_noise_scaled, y_test_rnn, batch_size=50,verbose=0)
-            score_1 = clean_model.evaluate(X_test_rnn_anomal, y_test_rnn, batch_size=50, verbose=0)
-            iter_score.append(score_1[1])
+            score_1 = lstm_model.evaluate(X_test_rnn_anomal, y_test_rnn, batch_size=50, verbose=0)
+            print(score_1)
+            iter_score.append(score_1[1]) #accuracy
 #             print(score_1[1])
 
+        #sorry i don't know what happened here - Mathijs
         dif = max(iter_score) - min(iter_score)
         score_2 = sum(iter_score)/len(iter_score)
         acc_noise_test.append(score_2)
-        print('Avg Test loss:', score_2)
+        print('Avg Test loss:', score_1[0]) #this has to be wrong, right?
         print('Avg Test accuracy:', score_2)
         acc_noise_test_rf_box.append(dif)
         
@@ -291,7 +316,7 @@ def normalizing_2d(X):
         
 def anomality_2d(X, anomaly): 
 
-    X = np.array(X).reshape(-1,21)
+    X = np.array(X).reshape(-1,NUM_FEATURES)
 
     mask = np.random.choice( X.shape[0], int(len(X)* .4), replace=False)
     # orgi_data[mask].shape
@@ -307,10 +332,6 @@ from keras.utils import np_utils
 from sklearn.preprocessing import StandardScaler
 
 #mathijs beun begint weer
-print(y)
-
-
-print(y)
 y_dummy = np_utils.to_categorical(y)
 
 from keras.models import Sequential
