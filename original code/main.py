@@ -30,6 +30,7 @@ from keras.utils.vis_utils import plot_model
 MATHIJS = False
 TRAINING = True
 EPOCHS = 100
+NUM_CLASSES = 4
 if MATHIJS:
     NUM_FEATURES = 52
     df = pd.read_csv("../Datasets/Driving Data(KIA SOUL)_(150728-160714)_(10 Drivers_A-J).csv")
@@ -197,7 +198,7 @@ if MATHIJS:
     mathijs_model.add(tf.keras.layers.LSTM(120, input_shape=(NUM_FEATURES,)))
     mathijs_model.add(tf.keras.layers.BatchNormalization())
     mathijs_model.add(tf.keras.layers.Dropout(.2))
-    mathijs_model.add(tf.keras.layers.Dense(4))
+    mathijs_model.add(tf.keras.layers.Dense(NUM_CLASSES))
     mathijs_model.add(tf.keras.layers.Softmax())
     print(mathijs_model.summary())
     lstm_model = tf.keras.models.clone_model(mathijs_model)
