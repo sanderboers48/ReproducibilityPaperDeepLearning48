@@ -27,11 +27,11 @@ from keras.utils.vis_utils import plot_model
 # plt.ylabel('Data Points')
 # plt.xlabel('Classes')
 
-MATHIJS = False
-TRAINING = True
+TOM = True
+TRAINING = False
 EPOCHS = 100
-NUM_CLASSES = 4
-if MATHIJS:
+NUM_CLASSES = 10
+if TOM:
     NUM_FEATURES = 52
     df = pd.read_csv("../Datasets/Driving Data(KIA SOUL)_(150728-160714)_(10 Drivers_A-J).csv")
 else:
@@ -41,15 +41,15 @@ else:
 def pre_process_encoder(df):
     print("Original dataframe size: ", df.shape)
 
-    if(MATHIJS):
-        df_4 = df[df.Class.isin(['A', 'B', 'C', 'D'])]
-        print("Reduced dataframe size (4 drivers): ", df_4.shape)
-        mapping = {'A': 0, 'B': 1, 'C': 2, 'D': 3}
-        df_4 = df_4.replace({'Class': mapping})
+    if(TOM):
+        df_10 = df[df.Class.isin(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'])]
+        print("Dataframe size (4 drivers): ", df_10.shape)
+        mapping = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'I': 8, 'J': 9}
+        df_10 = df_10.replace({'Class': mapping})
 
         # 'Features and label'
-        X = df_4.drop('Class',1)
-        y = df_4.Class
+        X = df_10.drop('Class',1)
+        y = df_10.Class
         # print(y)
     else:
         # tom en sander meuk komt nu! :)
@@ -68,7 +68,7 @@ def pre_process_encoder(df):
     if 'Trip'in X.columns:
         X.drop('Trip', axis=1, inplace=True)
 
-    #mathijs addition
+    #TOM addition
     X = np.array(X)
 
     X = X[:, :NUM_FEATURES] #reduce number of features to fit model input layer
@@ -189,19 +189,20 @@ print("X_test shape: ", X_test_5.shape)
 print("y_train shape: ", y_train_5.shape)
 print("y_test shape: ", y_test_5.shape)
 
-if MATHIJS:
-    mathijs_model = tf.keras.Sequential()
-    mathijs_model.add(tf.keras.layers.Input(shape=(None,NUM_FEATURES)))
-    mathijs_model.add(tf.keras.layers.LSTM(160, input_shape=(None,NUM_FEATURES), return_sequences=True))
-    mathijs_model.add(tf.keras.layers.BatchNormalization())
-    mathijs_model.add(tf.keras.layers.Dropout(.2))
-    mathijs_model.add(tf.keras.layers.LSTM(120, input_shape=(NUM_FEATURES,)))
-    mathijs_model.add(tf.keras.layers.BatchNormalization())
-    mathijs_model.add(tf.keras.layers.Dropout(.2))
-    mathijs_model.add(tf.keras.layers.Dense(NUM_CLASSES))
-    mathijs_model.add(tf.keras.layers.Softmax())
-    print(mathijs_model.summary())
-    lstm_model = tf.keras.models.clone_model(mathijs_model)
+if TOM:
+    TOM_model = tf.keras.Sequential()
+    TOM_model.add(tf.keras.layers.Input(shape=(None,NUM_FEATURES)))
+    TOM_model.add(tf.keras.layers.LSTM(160, input_shape=(None,NUM_FEATURES), return_sequences=True))
+    TOM_model.add(tf.keras.layers.BatchNormalization())
+    TOM_model.add(tf.keras.layers.Dropout(.2))
+    TOM_model.add(tf.keras.layers.LSTM(120, input_shape=(NUM_FEATURES,)))
+    TOM_model.add(tf.keras.layers.BatchNormalization())
+    TOM_model.add(tf.keras.layers.Dropout(.2))
+    TOM_model.add(tf.keras.layers.Dense(NUM_CLASSES))
+    TOM_model.add(tf.keras.layers.Softmax())
+    print(TOM_model.summary())
+    lstm_model = tf.keras.models.clone_model(TOM_model)
+
 else:
     lstm_model = tf.keras.models.clone_model(clean_model)
 
@@ -211,7 +212,7 @@ print("training lstm model")
 lstm_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
                     loss=tf.keras.losses.BinaryCrossentropy(),
                     metrics=[tf.keras.metrics.BinaryAccuracy()])
-if MATHIJS:
+if TOM:
     lstm_model.fit(X_train_5, y_train_5, epochs=EPOCHS)
 else:
     if TRAINING:
@@ -227,7 +228,8 @@ print(lstm_model.predict(np.expand_dims(X_test_5[0,:,:], axis=0)))
 
 X_test_normalized = normalizing(X_test_5)
 # score = clean_model.evaluate(X_test_normalized, y_test_5, batch_size=50)
-score = lstm_model.evaluate(X_test_5, y_test_5, batch_size=50)
+score = lstm_model.evaluate(X_test_normalized, y_test_5, batch_size=50)
+# score = lstm_model.evaluate(X_test_5, y_test_5, batch_size=50)
 print('Test loss:', score[0])
 print('Test accuracy:', score[-1])
 
@@ -285,7 +287,7 @@ def LSTM_anomality(X_test_rnn,y_test_rnn ):
             iter_score.append(score_1[1]) #accuracy
 #             print(score_1[1])
 
-        #sorry i don't know what happened here - Mathijs
+        #sorry i don't know what happened here - TOM
         dif = max(iter_score) - min(iter_score)
         score_2 = sum(iter_score)/len(iter_score)
         acc_noise_test.append(score_2)
@@ -332,7 +334,7 @@ X_train, X_test, y_train, y_test =train_test_split(X, y, train_size=0.85,shuffle
 from keras.utils import np_utils 
 from sklearn.preprocessing import StandardScaler
 
-#mathijs beun begint weer
+#TOM beun begint weer
 y_dummy = np_utils.to_categorical(y)
 
 from keras.models import Sequential
