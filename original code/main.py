@@ -28,8 +28,10 @@ from keras.utils.vis_utils import plot_model
 # plt.xlabel('Classes')
 
 TOM = True
-TRAINING = False
-EPOCHS = 10
+TRAINING = True
+TEST_NOISE = True
+SAVE_MODEL = True #overwrites earlier saved model!!
+EPOCHS = 250
 NUM_CLASSES = 10
 if TOM:
     NUM_FEATURES = 52
@@ -215,14 +217,19 @@ print("training lstm model")
 
 lstm_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
                     loss=tf.keras.losses.BinaryCrossentropy(),
-                    metrics=[tf.keras.metrics.BinaryAccuracy()])
+                    metrics=['accuracy'])
 if TOM:
-    lstm_model.fit(X_train_5, y_train_5, epochs=EPOCHS)
-else:
     if TRAINING:
         lstm_model.fit(X_train_5, y_train_5, epochs=EPOCHS)
+        if SAVE_MODEL:
+            lstm_model.save("group48_model")
     else:
-        pass
+        lstm_model = tf.keras.models.clone_model("group48_model")
+else:
+    if TRAINING:
+        lstm_model.fit(X_train_5, y_train_5, epochs=EPOCHS) #fit on the papers pretrained model
+    else:
+        pass #use the paper's pretrained model
 
 print("----- compare ground truth with model")
 print(y_test_5[0,:])
@@ -254,10 +261,22 @@ def LSTM_anomality(X_test_rnn,y_test_rnn ):
         def anomality(X, ): 
             orgi_data = np.copy(X_test_rnn.reshape(-1,NUM_FEATURES))
 
-            mask = np.random.choice( orgi_data.shape[0], int(len(orgi_data)* .5), replace=False)
+            mask = np.random.choice( orgi_data.shape[0], int(len(orgi_data)*.5), replace=False) # original mask. shape (samples*0.5,)
+            # mask = np.random.choice(orgi_data.shape[0], int(len(orgi_data) * 1), replace=False)  # self-made mask shape (samples*0.5,)
+            # print(orgi_data.shape)
+            # print(mask.shape)
             # orgi_data[mask].shape
 
-            orgi_data[mask] = orgi_data[mask]+orgi_data[mask]*anomaly
+
+
+
+            if TEST_NOISE: # use noise instead of anomality
+                std = anomaly * 2.25 #to scale to a maximum noise std of 2
+                noise_vector = np.random.normal(loc=0, scale=std, size=(mask.shape[0], NUM_FEATURES))
+                orgi_data[mask] = orgi_data[mask] +noise_vector
+            else:
+                orgi_data[mask] = orgi_data[mask] + orgi_data[mask] * anomaly
+
             
             return orgi_data
         
@@ -279,15 +298,13 @@ def LSTM_anomality(X_test_rnn,y_test_rnn ):
         iter_score = []    
         for i in range(5):
             
-            X_test_rnn_anomal = np.copy(anomality(X_test_rnn).reshape(-1,X_test_5.shape[1],X_test_5.shape[2]))
-            
-
+            X_test_rnn_anomal = np.copy(anomality(X_test_rnn).reshape(-1, X_test_5.shape[1], X_test_5.shape[2]))
             X_test_rnn_noise_scaled = normalizing(X_test_rnn_anomal)
            
             #pd.DataFrame(noising2(X_train.reshape(-1,49)))[1].head(1000).plot(kind='line')
 
-            # score_1 = clean_model.evaluate(X_test_rnn_noise_scaled, y_test_rnn, batch_size=50,verbose=0)
-            score_1 = lstm_model.evaluate(X_test_rnn_noise_scaled, y_test_rnn, batch_size=50, verbose=0)
+            score_1 = lstm_model.evaluate(X_test_rnn_anomal, y_test_rnn, batch_size=50, verbose=0) # not scaled
+            # score_1 = lstm_model.evaluate(X_test_rnn_noise_scaled, y_test_rnn, batch_size=50, verbose=0) # original
             print(score_1)
             iter_score.append(score_1[1]) #accuracy
 #             print(score_1[1])
@@ -326,10 +343,16 @@ def anomality_2d(X, anomaly):
 
     X = np.array(X).reshape(-1,NUM_FEATURES)
 
-    mask = np.random.choice( X.shape[0], int(len(X)* .4), replace=False)
-    # orgi_data[mask].shape
+    mask = np.random.choice( X.shape[0], int(len(X)* .4), replace=False) #original masking
 
-    X[mask] = X[mask]+X[mask]*anomaly
+    # mask = np.random.choice(X.shape[0], int(len(X) * 1), replace=False) #mask up to all samples
+
+    if TEST_NOISE:
+        std = anomaly*2
+        noise_vector = np.random.normal(loc=0, scale=std, size=(mask.shape[0], NUM_FEATURES))
+        X[mask] = X[mask] + noise_vector
+    else:
+        X[mask] = X[mask]+X[mask]*anomaly
 
     return X
 
