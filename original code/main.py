@@ -29,7 +29,7 @@ from keras.utils.vis_utils import plot_model
 
 TOM = True
 TRAINING = False
-EPOCHS = 100
+EPOCHS = 10
 NUM_CLASSES = 10
 if TOM:
     NUM_FEATURES = 52
@@ -137,7 +137,9 @@ def label_y(y_value):
 
 
 from sklearn.model_selection import train_test_split
-from tensorflow.keras.utils import to_categorical
+# from tensorflow.keras.utils import to_categorical
+from keras.utils import np_utils 
+
 
 def rnn_dimension(X,y):
     X_samples, y_samples = window(X, y)
@@ -151,7 +153,9 @@ def rnn_dimension(X,y):
     X_samples,  y_samples = shuffle(X_samples, y_samples)
 
     # to catagory
-    y_samples_cat = to_categorical(y_samples)
+    # y_samples_cat = tf.keras.utils.to_categorical(y_samples)
+    y_samples_cat = np_utils.to_categorical(y_samples)
+
 
 
     X_train_rnn, X_test_rnn, y_train_rnn, y_test_rnn =train_test_split(X_samples, y_samples_cat, train_size=0.85)
@@ -248,7 +252,7 @@ def LSTM_anomality(X_test_rnn,y_test_rnn ):
         print("for anomaly percentage = ",anomaly)
 
         def anomality(X, ): 
-            orgi_data = np.copy(X_test_5.reshape(-1,NUM_FEATURES))
+            orgi_data = np.copy(X_test_rnn.reshape(-1,NUM_FEATURES))
 
             mask = np.random.choice( orgi_data.shape[0], int(len(orgi_data)* .5), replace=False)
             # orgi_data[mask].shape
@@ -277,12 +281,13 @@ def LSTM_anomality(X_test_rnn,y_test_rnn ):
             
             X_test_rnn_anomal = np.copy(anomality(X_test_rnn).reshape(-1,X_test_5.shape[1],X_test_5.shape[2]))
             
+
             X_test_rnn_noise_scaled = normalizing(X_test_rnn_anomal)
            
             #pd.DataFrame(noising2(X_train.reshape(-1,49)))[1].head(1000).plot(kind='line')
 
             # score_1 = clean_model.evaluate(X_test_rnn_noise_scaled, y_test_rnn, batch_size=50,verbose=0)
-            score_1 = lstm_model.evaluate(X_test_rnn_anomal, y_test_rnn, batch_size=50, verbose=0)
+            score_1 = lstm_model.evaluate(X_test_rnn_noise_scaled, y_test_rnn, batch_size=50, verbose=0)
             print(score_1)
             iter_score.append(score_1[1]) #accuracy
 #             print(score_1[1])
