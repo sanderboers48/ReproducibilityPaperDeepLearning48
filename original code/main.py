@@ -28,10 +28,10 @@ from keras.utils.vis_utils import plot_model
 # plt.xlabel('Classes')
 
 TOM = True
-TRAINING = True
+TRAINING = False
 TEST_NOISE = True
-SAVE_MODEL = True #overwrites earlier saved model!!
-EPOCHS = 250
+SAVE_MODEL = False #overwrites earlier saved model!!
+EPOCHS = 3000
 NUM_CLASSES = 10
 if TOM:
     NUM_FEATURES = 52
@@ -209,6 +209,7 @@ if TOM:
     print(TOM_model.summary())
     lstm_model = tf.keras.models.clone_model(TOM_model)
 
+
 else:
     lstm_model = tf.keras.models.clone_model(clean_model)
 
@@ -224,7 +225,7 @@ if TOM:
         if SAVE_MODEL:
             lstm_model.save("group48_model")
     else:
-        lstm_model = tf.keras.models.clone_model("group48_model")
+        lstm_model = tf.keras.models.load_model("group48_model")
 else:
     if TRAINING:
         lstm_model.fit(X_train_5, y_train_5, epochs=EPOCHS) #fit on the papers pretrained model
