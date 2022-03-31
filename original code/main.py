@@ -29,11 +29,13 @@ from keras.utils.vis_utils import plot_model
 
 TOM = True
 TRAINING = False
-TEST_NOISE = True
+TEST_NOISE = False
 SAVE_MODEL = False #overwrites earlier saved model!!
 EPOCHS = 150
 NUM_CLASSES = 10
 NOISE_FACTOR = 2.5
+MASK_FACTOR = 0.6
+
 if TOM:
     NUM_FEATURES = 52
     df = pd.read_csv("../Datasets/Driving Data(KIA SOUL)_(150728-160714)_(10 Drivers_A-J).csv")
@@ -196,7 +198,7 @@ print("Normalizing LSTM train/test data")
 X_train_normalized = normalizing(X_train_5)
 
 # X_test_normalized = normalizing(X_test_5) #dont do before adding noise??
-X_test_normalized = np.copy(X_test_5)
+X_test_normalized = np.copy(X_test_5) #only scale X_test after adding noise!
 
 print("X_train shape: ", X_train_normalized.shape)
 print("X_test shape: ", X_test_normalized.shape)
@@ -274,7 +276,7 @@ def LSTM_anomality(X_test_rnn,y_test_rnn ):
             orgi_data = np.copy(X_test_rnn.reshape(-1,NUM_FEATURES))
             print(orgi_data.shape)
 
-            mask = np.random.choice( orgi_data.shape[0], int(len(orgi_data)*.5), replace=False) # original mask. shape (samples*0.5,)
+            mask = np.random.choice( orgi_data.shape[0], int(len(orgi_data)*MASK_FACTOR), replace=False) # original mask. shape (samples*0.5,)
             # mask = np.random.choice(orgi_data.shape[0], int(len(orgi_data) * 1), replace=False)  # self-made mask shape (samples*0.5,)
             # print(orgi_data.shape)
             # print(mask.shape)
@@ -355,7 +357,7 @@ def anomality_2d(X, anomaly):
 
     X = np.array(X).reshape(-1,NUM_FEATURES)
 
-    mask = np.random.choice( X.shape[0], int(len(X)* .4), replace=False) #original masking
+    mask = np.random.choice( X.shape[0], int(len(X)* MASK_FACTOR), replace=False) #original masking
 
     # mask = np.random.choice(X.shape[0], int(len(X) * 1), replace=False) #mask up to all samples
 
@@ -608,7 +610,7 @@ else:
     plt.plot(anomality_level[:10], acc_mlp[:10], marker='o', label="FCNN", linewidth=3.5)
     plt.plot(anomality_level[:10], acc_dt[:10], marker='*', label="Decision Tree", linewidth=3.5)
     plt.plot(anomality_level[:10], acc_rf[:10], marker='x', label="Random Forest", linewidth=3.5)
-    plt.xlabel("Percentage of sensor anomalities induced in the data (*100)" , fontsize=16)
+    plt.xlabel("Percentage of sensor anomalities induced in the data (*100)" , fontsize=12)
 plt.ylabel("accuracy", fontsize=20)
 # plt.title("Accuracy on noisy data")
 plt.legend(loc=3, fontsize=16)
