@@ -31,8 +31,9 @@ TOM = True
 TRAINING = False
 TEST_NOISE = True
 SAVE_MODEL = False #overwrites earlier saved model!!
-EPOCHS = 3000
+EPOCHS = 150
 NUM_CLASSES = 10
+NOISE_FACTOR = 2.5
 if TOM:
     NUM_FEATURES = 52
     df = pd.read_csv("../Datasets/Driving Data(KIA SOUL)_(150728-160714)_(10 Drivers_A-J).csv")
@@ -190,8 +191,15 @@ def normalizing(X_test):
 clean_model = load_model('Model_clean_binary_cross_ICTAI_vehicle2_1')
 # clean_model = load_model('Model_FCNN_ICTAI_vehicle2_1')
 print(clean_model.summary())
-print("X_train shape: ", X_train_5.shape)
-print("X_test shape: ", X_test_5.shape)
+
+print("Normalizing LSTM train/test data")
+X_train_normalized = normalizing(X_train_5)
+
+# X_test_normalized = normalizing(X_test_5) #dont do before adding noise??
+X_test_normalized = np.copy(X_test_5)
+
+print("X_train shape: ", X_train_normalized.shape)
+print("X_test shape: ", X_test_normalized.shape)
 print("y_train shape: ", y_train_5.shape)
 print("y_test shape: ", y_test_5.shape)
 
@@ -213,37 +221,40 @@ if TOM:
 else:
     lstm_model = tf.keras.models.clone_model(clean_model)
 
-print("----------------------")
-print("training lstm model")
+
 
 lstm_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
                     loss=tf.keras.losses.BinaryCrossentropy(),
                     metrics=['accuracy'])
 if TOM:
     if TRAINING:
-        lstm_model.fit(X_train_5, y_train_5, epochs=EPOCHS)
+        print("----------------------")
+        print("training lstm model")
+        lstm_model.fit(X_train_normalized, y_train_5, epochs=EPOCHS)
         if SAVE_MODEL:
             lstm_model.save("group48_model")
     else:
+        print("----------------------")
+        print("loading group48 lstm model")
         lstm_model = tf.keras.models.load_model("group48_model")
 else:
     if TRAINING:
-        lstm_model.fit(X_train_5, y_train_5, epochs=EPOCHS) #fit on the papers pretrained model
+        print("----------------------")
+        print("training lstm model")
+        lstm_model.fit(X_train_normalized, y_train_5, epochs=EPOCHS) #fit on the papers pretrained model
     else:
+        print("----------------------")
+        print("loading paper's lstm model")
         pass #use the paper's pretrained model
 
-print("----- compare ground truth with model")
-print(y_test_5[0,:])
-X_test_5 = np.asarray(X_test_5).astype('float32')
-print(lstm_model.predict(np.expand_dims(X_test_5[0,:,:], axis=0)))
 
 
-X_test_normalized = normalizing(X_test_5)
-# score = clean_model.evaluate(X_test_normalized, y_test_5, batch_size=50)
-score = lstm_model.evaluate(X_test_normalized, y_test_5, batch_size=50)
-# score = lstm_model.evaluate(X_test_5, y_test_5, batch_size=50)
-print('Test loss:', score[0])
-print('Test accuracy:', score[-1])
+
+# # score = clean_model.evaluate(X_test_normalized, y_test_5, batch_size=50)
+# score = lstm_model.evaluate(X_test_normalized, y_test_5, batch_size=50)
+# # score = lstm_model.evaluate(X_test_5, y_test_5, batch_size=50)
+# print('Test loss:', score[0])
+# print('Test accuracy:', score[-1])
 
 
 
@@ -261,6 +272,7 @@ def LSTM_anomality(X_test_rnn,y_test_rnn ):
 
         def anomality(X, ): 
             orgi_data = np.copy(X_test_rnn.reshape(-1,NUM_FEATURES))
+            print(orgi_data.shape)
 
             mask = np.random.choice( orgi_data.shape[0], int(len(orgi_data)*.5), replace=False) # original mask. shape (samples*0.5,)
             # mask = np.random.choice(orgi_data.shape[0], int(len(orgi_data) * 1), replace=False)  # self-made mask shape (samples*0.5,)
@@ -272,13 +284,12 @@ def LSTM_anomality(X_test_rnn,y_test_rnn ):
 
 
             if TEST_NOISE: # use noise instead of anomality
-                std = anomaly * 2.25 #to scale to a maximum noise std of 2
-                noise_vector = np.random.normal(loc=0, scale=std, size=(mask.shape[0], NUM_FEATURES))
-                orgi_data[mask] = orgi_data[mask] +noise_vector
+                std = anomaly * NOISE_FACTOR #to scale to a maximum noise std of 2
+                noise_vector = np.random.normal(loc=0, scale=std, size=(orgi_data.shape[0], NUM_FEATURES))
+                orgi_data = orgi_data + noise_vector
             else:
                 orgi_data[mask] = orgi_data[mask] + orgi_data[mask] * anomaly
 
-            
             return orgi_data
         
         def normalizing(X_test):
@@ -299,13 +310,13 @@ def LSTM_anomality(X_test_rnn,y_test_rnn ):
         iter_score = []    
         for i in range(5):
             
-            X_test_rnn_anomal = np.copy(anomality(X_test_rnn).reshape(-1, X_test_5.shape[1], X_test_5.shape[2]))
+            X_test_rnn_anomal = np.copy(anomality(X_test_rnn).reshape(-1, X_test_rnn.shape[1], X_test_rnn.shape[2]))
             X_test_rnn_noise_scaled = normalizing(X_test_rnn_anomal)
            
             #pd.DataFrame(noising2(X_train.reshape(-1,49)))[1].head(1000).plot(kind='line')
 
-            score_1 = lstm_model.evaluate(X_test_rnn_anomal, y_test_rnn, batch_size=50, verbose=0) # not scaled
-            # score_1 = lstm_model.evaluate(X_test_rnn_noise_scaled, y_test_rnn, batch_size=50, verbose=0) # original
+            # score_1 = lstm_model.evaluate(X_test_rnn_anomal, y_test_rnn, batch_size=50, verbose=0) # not scaled
+            score_1 = lstm_model.evaluate(X_test_rnn_noise_scaled, y_test_rnn, batch_size=50, verbose=0) # original
             print(score_1)
             iter_score.append(score_1[1]) #accuracy
 #             print(score_1[1])
@@ -321,7 +332,7 @@ def LSTM_anomality(X_test_rnn,y_test_rnn ):
     return acc_noise_test,acc_noise_test_rf_box
         
         
-LSTM_acc_noise_test, LSTM_noise_acc_box = LSTM_anomality(X_test_5, y_test_5)
+LSTM_acc_noise_test, LSTM_noise_acc_box = LSTM_anomality(X_test_normalized, y_test_5)
 acc = []
 fig1 = plt.figure()
 for n in range(len(LSTM_acc_noise_test)):
@@ -349,9 +360,9 @@ def anomality_2d(X, anomaly):
     # mask = np.random.choice(X.shape[0], int(len(X) * 1), replace=False) #mask up to all samples
 
     if TEST_NOISE:
-        std = anomaly*2
-        noise_vector = np.random.normal(loc=0, scale=std, size=(mask.shape[0], NUM_FEATURES))
-        X[mask] = X[mask] + noise_vector
+        std = anomaly*NOISE_FACTOR
+        noise_vector = np.random.normal(loc=0, scale=std, size=(X.shape[0], NUM_FEATURES))
+        X = X + noise_vector
     else:
         X[mask] = X[mask]+X[mask]*anomaly
 
@@ -579,16 +590,25 @@ plt.errorbar(anomality_level,acc_rf, rf_noise_acc_box, fmt='.k', color='black',
 
 #mpl.style.use('seaborn-poster')
 fig2 = plt.figure()
-plt.axis([-0.07,.82,0,1.08])
+
 # anomality_level = [0,0.2,0.4,0.6,0.8,1]
 # noise_sig = anomality_level 
+noise_level = np.array(anomality_level[:10])*NOISE_FACTOR
 
-plt.plot(anomality_level[:10],acc[:10], marker='^' ,label="LSTM", linewidth=3.5)
-plt.plot(anomality_level[:10], acc_mlp[:10], marker='o', label="FCNN", linewidth=3.5)
-plt.plot(anomality_level[:10],acc_dt[:10], marker='*', label="Decision Tree", linewidth=3.5)
-plt.plot(anomality_level[:10],acc_rf[:10], marker='x', label="Random Forest", linewidth=3.5)
-
-plt.xlabel("Percentage of sensor anomalities induced in the data (*100)" , fontsize=16)
+if TEST_NOISE:
+    plt.axis([-0.07, noise_level[-1]+0.1, 0, 1.08])
+    plt.plot(noise_level, acc[:10], marker='^', label="LSTM", linewidth=3.5)
+    plt.plot(noise_level, acc_mlp[:10], marker='o', label="FCNN", linewidth=3.5)
+    plt.plot(noise_level, acc_dt[:10], marker='*', label="Decision Tree", linewidth=3.5)
+    plt.plot(noise_level, acc_rf[:10], marker='x', label="Random Forest", linewidth=3.5)
+    plt.xlabel("STD of sensor noise induced in the data ", fontsize=16)
+else:
+    plt.axis([-0.07, .82, 0, 1.08])
+    plt.plot(anomality_level[:10], acc[:10], marker='^', label="LSTM", linewidth=3.5)
+    plt.plot(anomality_level[:10], acc_mlp[:10], marker='o', label="FCNN", linewidth=3.5)
+    plt.plot(anomality_level[:10], acc_dt[:10], marker='*', label="Decision Tree", linewidth=3.5)
+    plt.plot(anomality_level[:10], acc_rf[:10], marker='x', label="Random Forest", linewidth=3.5)
+    plt.xlabel("Percentage of sensor anomalities induced in the data (*100)" , fontsize=16)
 plt.ylabel("accuracy", fontsize=20)
 # plt.title("Accuracy on noisy data")
 plt.legend(loc=3, fontsize=16)
