@@ -1,4 +1,5 @@
 # Reproduction of Driver Identiﬁcation Based on Vehicle Telematics Data using LSTM-Recurrent Neural Network by Girma et. al.
+## Group 48
 
 Authors:  
 Sander Boers  
