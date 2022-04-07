@@ -1,10 +1,24 @@
 # Reproduction of Driver Identiﬁcation Based on Vehicle Telematics Data using LSTM-Recurrent Neural Network by Girma et. al.
 
-## Authors:  
+Authors:  
 Sander Boers  
 Mathijs van Geerenstein  
 Tom Weinans 4445449
 
+## Abstract
+
+## Introduction
+
+## Methods
+
+## Results
+
+## Conclusion
+
+
+
+
+# stuff from someone else
 Corner detection is a very useful and common computer vision procedure.
 In "A Neural Network Based Corner Detection Method" a technique is proposed that uses neural networks to find these corners.
 In this article, we will reproduce the technique described in this paper and test it on real-world data.
