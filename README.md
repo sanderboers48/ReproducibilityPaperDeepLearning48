@@ -128,11 +128,3 @@ These reasons in combination with the previously stated difficulties like not kn
 [2] Byung Il Kwak. (2016). Hacking and countermeasure research lab. Security Driving dataset. https://ocslab.hksecurity.net/Datasets/driving-dataset.
 
 [3] P. Rettore. (2018, January). Vehicular-trace dataset. http://www.prof.rettore.com.br/vehicular-trace/
-
-## links from nice looking blogs:
-* https://crisalixsa.github.io/h3d-net/
-* https://github.com/RILEY-BLUE/Deep-Learning-Reproductiton/blob/master/Blog.ipynb
-* https://medium.com/mlearning-ai/reproducibility-for-deep-fruit-detection-in-orchards-e518367ccf35
-* https://bilal-attar.medium.com/deep-fruit-detection-in-orchards-a-reproduction-b3ca83ee0846
-* https://dlorchardrepro.wordpress.com/
-* https://www.notion.so/A-NEURAL-NETWORK-BASED-CORNER-DETECTION-METHOD-7fd032fbeb5043f18d9b858ca8eacd5a
