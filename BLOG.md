@@ -1,6 +1,9 @@
-# A NEURAL NETWORK BASED CORNER DETECTION METHOD AND MOTION DETECTION
+# Reproduction of Driver Identiﬁcation Based on Vehicle Telematics Data using LSTM-Recurrent Neural Network by Girma et. al.
 
-By: Noah Jadoenathmisier (4684907 TU-Delft)
+## Authors:  
+Sander Boers  
+Mathijs van Geerenstein  
+Tom Weinans 4445449
 
 Corner detection is a very useful and common computer vision procedure.
 In "A Neural Network Based Corner Detection Method" a technique is proposed that uses neural networks to find these corners.
