@@ -260,8 +260,8 @@ elif MODEL_TYPE == "PYTORCH":
             with torch.no_grad():
                 loss_fn = nn.BCELoss()
                 self.eval()
-                y_pred = self.forward(X_test)
-                loss = loss_fn(y_pred, y_test)
+                y_pred = self.forward(torch.from_numpy(X_test).double())
+                loss = loss_fn(y_pred, torch.from_numpy(y_test).long())
                 print(loss)
 
             return loss
