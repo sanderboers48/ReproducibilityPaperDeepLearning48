@@ -113,6 +113,20 @@ In order to still be able to create similar results we had to build our own LSTM
 This brings us to the next part which made the replication difficult, the inconsistency in the code. The code below is a part of their python function called “LSTM_anomality”. It takes as inputs X_test_rnn & y_test_rn, does some things which it needs to do and then computes an average test loss and an average test accuracy which are linked to exactly the same variable which cannot be correct. After this they return acc_noise_test and acc_noise_test_rf_box while there is no noise added in this function and its output is also not used for a Random Forest as the rf suggests. These kinds of small naming errors make it difficult to understand what is happening in the code.
 
 ![alt text](https://github.com/sanderboers48/ReproducibilityPaperDeepLearning48/blob/main/figures/image1.png?raw=true)
+```python
+            score_1 = clean_model.evaluate(X_test_rnn_noise_scaled, y_test_rnn, batch_size=50,verbose=0)
+            iter_score.append(score_1[1])
+            # print(score_1[1])
+
+        dif = max(iter_score) - min(iter_score)
+        score_2 = sum(iter_score)/len(iter_score)
+        acc_noise_test.append(score_2)
+        print('Avg Test loss:', score_2)
+        print('Avg Test accuracy:', score_2)
+        acc_noise_test_rf_box.append(dif)
+        
+    return acc_noise_test,acc_noise_test_rf_box
+```
 
 ### Results discussion
 In the two figures we were reproducing we did not manage to exactly replicate the results. Starting with the figure where the LSTM and other models are trained on data without noise after which their performance is checked on data with increasing levels of artificial noise. In the paper they show that LSTM is very robust against the increasing levels of noise and keeps an accuracy of 90% while the other three rapidly drop until their accuracy is under 20%. Our result shows a similar trend where the LSTM outperforms the other three models. However, the accuracy of the LSTM drops significantly more while the other three models seem less affected compared to the paper. When we then look at the figure where the models are also trained on noisy data the trend seems to be the same as in the paper with a slight decrease in accuracy for the first free models. However, the Random Forest has a higher accuracy in our results and now outperforms the Decision Tree.
