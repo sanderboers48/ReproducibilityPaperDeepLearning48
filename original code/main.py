@@ -31,7 +31,15 @@ KIA = True #if false: using VehicularData(anonymized) set
 TRAINING = True
 TEST_NOISE = True
 SAVE_MODEL = False #overwrites earlier saved model!!
-EPOCHS = 15
+SAVE_FIG = False #overwrites earlier saved figure
+if KIA:
+    save_model_name = "group48_model_KIA"
+else:
+    save_model_name = "group48_model_VehicularData"
+
+
+
+EPOCHS = 50
 NUM_CLASSES = 10
 NOISE_FACTOR = 2.5
 MASK_FACTOR = 0.6
@@ -228,27 +236,33 @@ else:
 lstm_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
                     loss=tf.keras.losses.BinaryCrossentropy(),
                     metrics=['accuracy'])
+
+
 if KIA:
     if TRAINING:
         print("----------------------")
-        print("training lstm model")
+        print("training KIA lstm model")
         lstm_model.fit(X_train_normalized, y_train_5, epochs=EPOCHS)
         if SAVE_MODEL:
-            lstm_model.save("group48_model")
+            lstm_model.save(save_model_name)
     else:
         print("----------------------")
-        print("loading group48 lstm model")
-        lstm_model = tf.keras.models.load_model("group48_model")
+        print("loading group48 KIA lstm model")
+        lstm_model = tf.keras.models.load_model(save_model_name)
 else:
     if TRAINING:
         print("----------------------")
-        print("training lstm model")
+        print("training Vehicular lstm model")
         lstm_model.fit(X_train_normalized, y_train_5, epochs=EPOCHS) #fit on the papers pretrained model
+        if SAVE_MODEL:
+            lstm_model.save(save_model_name)
     else:
+        # print("----------------------")
+        # print("loading paper's lstm model")
+        # pass #use the paper's pretrained model
         print("----------------------")
-        print("loading paper's lstm model")
-        pass #use the paper's pretrained model
-
+        print("loading group48 Vehicular lstm model")
+        lstm_model = tf.keras.models.load_model(save_model_name)
 
 
 
@@ -604,6 +618,11 @@ if TEST_NOISE:
     plt.plot(noise_level, acc_dt[:10], marker='*', label="Decision Tree", linewidth=3.5)
     plt.plot(noise_level, acc_rf[:10], marker='x', label="Random Forest", linewidth=3.5)
     plt.xlabel("STD of sensor noise induced in the data ", fontsize=16)
+    if SAVE_FIG:
+        if KIA:
+            plt.savefig('KIA.png')
+        else:
+            plt.savefig('VehicularData.png')
 else:
     plt.axis([-0.07, .82, 0, 1.08])
     plt.plot(anomality_level[:10], acc[:10], marker='^', label="LSTM", linewidth=3.5)
