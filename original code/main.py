@@ -28,7 +28,7 @@ from keras.utils.vis_utils import plot_model
 # plt.xlabel('Classes')
 
 KIA = True #if false: using VehicularData(anonymized) set
-TRAINING = True #if false will load model
+TRAINING = False #if false will load model
 TEST_NOISE = True
 SAVE_MODEL = False #overwrites earlier saved model!!
 SAVE_FIG = False #overwrites earlier saved figure
@@ -39,7 +39,7 @@ else:
 
 
 
-EPOCHS = 50
+EPOCHS = 25
 NUM_CLASSES = 10
 NOISE_FACTOR = 2.5
 MASK_FACTOR = 0.6
@@ -66,7 +66,7 @@ def pre_process_encoder(df):
         # print(y)
     else:
         # tom en sander meuk komt nu! :)
-        df = df.iloc[85095:, [1, 10, 11, 12, 13, 14, 16, 19, 20, 22, 26, 27, 29, 31, 32, 33, 35, 36, 38, 40, 41, 42]]
+        df = df.iloc[:85095, [1, 10, 11, 12, 13, 14, 16, 19, 20, 22, 26, 27, 29, 31, 32, 33, 35, 36, 38, 40, 41, 42]]
         'Features and label'
         X = df.drop('Person_Id',1)
         y = df.Person_Id
@@ -229,7 +229,19 @@ if KIA:
 
 
 else:
-    lstm_model = tf.keras.models.clone_model(clean_model)
+    VehicularData_model = tf.keras.Sequential()
+    VehicularData_model.add(tf.keras.layers.Input(shape=(None,NUM_FEATURES)))
+    VehicularData_model.add(tf.keras.layers.LSTM(160, input_shape=(None,NUM_FEATURES), return_sequences=True))
+    VehicularData_model.add(tf.keras.layers.BatchNormalization())
+    VehicularData_model.add(tf.keras.layers.Dropout(.2))
+    VehicularData_model.add(tf.keras.layers.LSTM(120, input_shape=(NUM_FEATURES,)))
+    VehicularData_model.add(tf.keras.layers.BatchNormalization())
+    VehicularData_model.add(tf.keras.layers.Dropout(.2))
+    VehicularData_model.add(tf.keras.layers.Dense(NUM_CLASSES))
+    VehicularData_model.add(tf.keras.layers.Softmax())
+    print(VehicularData_model.summary())
+    lstm_model = tf.keras.models.clone_model(VehicularData_model)
+    # lstm_model = tf.keras.models.clone_model(clean_model)
 
 
 
