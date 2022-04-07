@@ -22,7 +22,7 @@ from keras.utils.vis_utils import plot_model
 import torch
 from torch.utils.data import DataLoader
 from torch import nn
-from tqdm import tqdm
+
 
 'Read the file'
 
@@ -33,7 +33,8 @@ from tqdm import tqdm
 # plt.ylabel('Data Points')
 # plt.xlabel('Classes')
 
-TOM = True
+KIA = True
+MODEL_TYPE = ["Original", "TOM", "PYTORCH"][2]
 TRAINING = False
 TEST_NOISE = False
 SAVE_MODEL = False #overwrites earlier saved model!!
@@ -42,7 +43,7 @@ NUM_CLASSES = 10
 NOISE_FACTOR = 2.5
 MASK_FACTOR = 0.6
 
-if TOM:
+if KIA:
     NUM_FEATURES = 52
     df = pd.read_csv("../Datasets/Driving Data(KIA SOUL)_(150728-160714)_(10 Drivers_A-J).csv")
 else:
@@ -52,7 +53,7 @@ else:
 def pre_process_encoder(df):
     print("Original dataframe size: ", df.shape)
 
-    if(TOM):
+    if(KIA):
         df_10 = df[df.Class.isin(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'])]
         print("Dataframe size (4 drivers): ", df_10.shape)
         mapping = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'I': 8, 'J': 9}
@@ -62,7 +63,7 @@ def pre_process_encoder(df):
         X = df_10.drop('Class', 1)
         y = df_10.Class
         # print(y)
-    else:
+    else: #if not kia dataset
         # tom en sander meuk komt nu! :)
         df = df.iloc[85095:, [1, 10, 11, 12, 13, 14, 16, 19, 20, 22, 26, 27, 29, 31, 32, 33, 35, 36, 38, 40, 41, 42]]
         'Features and label'
@@ -195,7 +196,7 @@ def normalizing(X_test):
 
     return X_test_scaled
 
-clean_model = load_model('Model_clean_binary_cross_ICTAI_vehicle2_1')
+clean_model = load_model('Model_clean_binary_cross_ICTAI_vehicle2_1.h5')
 # clean_model = load_model('Model_FCNN_ICTAI_vehicle2_1')
 print(clean_model.summary())
 
@@ -212,7 +213,7 @@ print("y_train shape: ", y_train_5.shape)
 print("y_train shape: ", y_train_5.shape)
 print("y_test shape: ", y_test_5.shape)
 
-if TOM:
+if MODEL_TYPE=='TOM':
     TOM_model = tf.keras.Sequential()
     TOM_model.add(tf.keras.layers.Input(shape=(None,NUM_FEATURES)))
     TOM_model.add(tf.keras.layers.LSTM(160, input_shape=(None,NUM_FEATURES), return_sequences=True))
@@ -225,17 +226,62 @@ if TOM:
     TOM_model.add(tf.keras.layers.Softmax())
     print(TOM_model.summary())
     lstm_model = tf.keras.models.clone_model(TOM_model)
+    lstm_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+                       loss=tf.keras.losses.BinaryCrossentropy(),
+                       metrics=['accuracy'])
+
+elif MODEL_TYPE == "PYTORCH":
+    class LSTMmodel(torch.nn.Module):
+
+        def __init__(self):
+            super(LSTMmodel, self).__init__()
+
+            self.lstm1 = nn.LSTM(hidden_size=160, input_size=NUM_FEATURES)
+            self.batchNorm1 = nn.LazyBatchNorm1d()
+            self.dropout1 = nn.Dropout(p=0.2)
+            self.lstm2 = nn.LSTM(hidden_size=120, input_size=160)
+            self.batchNorm2 = nn.BatchNorm1d(num_features=16)
+            self.dropout2 = nn.Dropout(p=0.2)
+            self.linear1 = nn.LazyLinear(NUM_CLASSES)
+            self.softmax = nn.Softmax(dim=1)
+
+        def forward(self, x):
+            x, _ = self.lstm1(x)
+            # x = self.batchNorm1(x)
+            x = self.dropout1(x)
+            x, _ = self.lstm2(x)
+            x = self.batchNorm2(x)
+            x = self.dropout2(x)
+            x = self.linear1(x)
+            x = self.softmax(x)
+            return x
+
+
+    # lstm_model = nn.Sequential(
+    #     # nn.Linear(16, NUM_FEATURES),
+    #     nn.LSTM(hidden_size=160, input_size=NUM_FEATURES),
+    #     nn.BatchNorm1d(num_features=NUM_FEATURES),
+    #     nn.Dropout(p=0.2),
+    #     # nn.LSTM(hidden_size=120, input_size=(NUM_FEATURES)),
+    #     nn.BatchNorm1d(num_features=NUM_FEATURES),
+    #     nn.Dropout(p=0.2),
+    #     nn.LazyLinear(NUM_FEATURES),
+    #     nn.Softmax()
+    # )
+
+    lstm_model = LSTMmodel()
+    print(lstm_model)
 
 
 else:
     lstm_model = tf.keras.models.clone_model(clean_model)
+    lstm_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+                       loss=tf.keras.losses.BinaryCrossentropy(),
+                       metrics=['accuracy'])
 
 
 
-lstm_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
-                    loss=tf.keras.losses.BinaryCrossentropy(),
-                    metrics=['accuracy'])
-if TOM:
+if MODEL_TYPE=='TOM':
     if TRAINING:
         print("----------------------")
         print("training lstm model")
