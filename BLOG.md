@@ -17,8 +17,15 @@ Tom Weinans 4445449
 
 
 
+## links from nice looking blogs:
+* https://crisalixsa.github.io/h3d-net/
+* https://github.com/RILEY-BLUE/Deep-Learning-Reproductiton/blob/master/Blog.ipynb
+* https://medium.com/mlearning-ai/reproducibility-for-deep-fruit-detection-in-orchards-e518367ccf35
+* https://bilal-attar.medium.com/deep-fruit-detection-in-orchards-a-reproduction-b3ca83ee0846
+* https://dlorchardrepro.wordpress.com/
+* https://www.notion.so/A-NEURAL-NETWORK-BASED-CORNER-DETECTION-METHOD-7fd032fbeb5043f18d9b858ca8eacd5a
 
-# stuff from someone else
+## stuff from someone else:
 Corner detection is a very useful and common computer vision procedure.
 In "A Neural Network Based Corner Detection Method" a technique is proposed that uses neural networks to find these corners.
 In this article, we will reproduce the technique described in this paper and test it on real-world data.
