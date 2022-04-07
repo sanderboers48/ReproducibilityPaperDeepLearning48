@@ -2,21 +2,84 @@
 ## Group 48
 
 Authors:  
-Sander Boers  
-Mathijs van Geerenstein  
-Tom Weinans 4445449
+Sander Boers - 4670299 - s.h.boers@student.tudelft.nl
+
+Mathijs van Geerenstein - 4598660 - m.r.vangeerenstein@student.tudelft.nl 
+
+Tom Weinans - 4445449 - t.weimans@student.tudelft.nl
 
 ## Abstract
 
 ## Introduction
 
+TEXT
+
+![alt text](https://github.com/sanderboers48/ReproducibilityPaperDeepLearning48/blob/main/figures/image6.png?raw=true)
+
+TEXT
+
+![alt text](https://github.com/sanderboers48/ReproducibilityPaperDeepLearning48/blob/main/figures/image10.png?raw=true)
+
 ## Methods
+
+TEXT
+
+### LSTM Model
+
+TEXT
+
+![alt text](https://github.com/sanderboers48/ReproducibilityPaperDeepLearning48/blob/main/figures/image4.png?raw=true)
+
+### Evaluation
+
+TEXT
+
+![alt text](https://github.com/sanderboers48/ReproducibilityPaperDeepLearning48/blob/main/figures/image9.png?raw=true)
+
+TEXT
+
+![alt text](https://github.com/sanderboers48/ReproducibilityPaperDeepLearning48/blob/main/figures/image5.png?raw=true)
 
 ## Results
 
+### Reproduction
+![alt text](https://github.com/sanderboers48/ReproducibilityPaperDeepLearning48/blob/main/figures/image1.png?raw=true)
+
 ## Conclusion
 
+![alt text](https://github.com/sanderboers48/ReproducibilityPaperDeepLearning48/blob/main/figures/image2.png?raw=true)
 
+![alt text](https://github.com/sanderboers48/ReproducibilityPaperDeepLearning48/blob/main/figures/image3.png?raw=true)
+
+### New data
+
+TEXT
+
+![alt text](https://github.com/sanderboers48/ReproducibilityPaperDeepLearning48/blob/main/figures/image7.png?raw=true)
+
+TEXT
+
+![alt text](https://github.com/sanderboers48/ReproducibilityPaperDeepLearning48/blob/main/figures/image8.png?raw=true)
+
+TEXT
+
+### New code variant
+
+TEXT
+
+## Discussion
+
+### General discussion
+
+TEXT
+
+### Results discussion
+
+TEXT
+
+## References
+
+TEXT
 
 ## links from nice looking blogs:
 * https://crisalixsa.github.io/h3d-net/
