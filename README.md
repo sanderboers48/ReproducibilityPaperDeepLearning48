@@ -103,13 +103,24 @@ class LSTMmodel(torch.nn.Module):
 
 ### General discussion
 
-TEXT
+Apart from slightly differing results as compared to the paper there are several reasons which made it difficult to reproduce their results in the first place. Most of these are a result of ambiguity and a lack of clearness in the provided code on their github or in their description in the paper.
+First of all their python file is built to show accuracy vs anomalies and it is unclear if they have used a similar approach for the sensor noise which we needed to produce.
+
+Furthermore it is stated in the paper that they are using the Kia dataset, which has 10 drivers and 52 features. However, in their python file the LSTM model works with only 21 input features and 4 outputs (drivers) and they don’t specify which part of the dataset they have used to get the desired results shown in the paper. 
+
+In order to still be able to create similar results we had to build our own LSTM model with a similar structure as their pretrained model. Unfortunately it is never stated how they trained their LSTM model so loss function and number of epochs was something we had to make an educated guess about. This also means that it was unclear what they used as a loss function so we had to make a guess.
+
+This brings us to the next part which made the replication difficult, the inconsistency in the code. The code below is a part of their python function called “LSTM_anomality”. It takes as inputs X_test_rnn & y_test_rn, does some things which it needs to do and then computes an average test loss and an average test accuracy which are linked to exactly the same variable which cannot be correct. After this they return acc_noise_test and acc_noise_test_rf_box while there is no noise added in this function and its output is also not used for a Random Forest as the rf suggests. These kinds of small naming errors make it difficult to understand what is happening in the code.
 
 ![alt text](https://github.com/sanderboers48/ReproducibilityPaperDeepLearning48/blob/main/figures/image1.png?raw=true)
 
 ### Results discussion
+In the two figures we were reproducing we did not manage to exactly replicate the results. Starting with the figure where the LSTM and other models are trained on data without noise after which their performance is checked on data with increasing levels of artificial noise. In the paper they show that LSTM is very robust against the increasing levels of noise and keeps an accuracy of 90% while the other three rapidly drop until their accuracy is under 20%. Our result shows a similar trend where the LSTM outperforms the other three models. However, the accuracy of the LSTM drops significantly more while the other three models seem less affected compared to the paper. When we then look at the figure where the models are also trained on noisy data the trend seems to be the same as in the paper with a slight decrease in accuracy for the first free models. However, the Random Forest has a higher accuracy in our results and now outperforms the Decision Tree.
 
-TEXT
+It is difficult to exactly pinpoint the reason for these differences in the original and the reproduction but we think several factors have played a role. Apart from changing the model structure to correctly use the input features and number of outputs, we also had to write our own implementation to add the noise to the test data for the first figure and to the training data for the second figure. There was no training data normalization or test data normalization after adding the noise in the original code so that had to be implemented by us. 
+
+These reasons in combination with the previously stated difficulties like not knowing which data they used exactly resulted in that we were not able to create a one on one match with the papers results. 
+
 
 ## References
 [1]. Girma, A., Yan, X., & Homaifar, A. (2019, November). Driver identification based on vehicle telematics data using lstm-recurrent neural network. In 2019 IEEE 31st International Conference on Tools with Artificial Intelligence (ICTAI) (pp. 894-902). IEEE. https://ieeexplore.ieee.org/abstract/document/8995202
