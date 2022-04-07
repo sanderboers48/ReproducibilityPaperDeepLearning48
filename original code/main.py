@@ -28,7 +28,7 @@ from keras.utils.vis_utils import plot_model
 # plt.xlabel('Classes')
 
 KIA = True #if false: using VehicularData(anonymized) set
-TRAINING = True
+TRAINING = True #if false will load model
 TEST_NOISE = True
 SAVE_MODEL = False #overwrites earlier saved model!!
 SAVE_FIG = False #overwrites earlier saved figure
