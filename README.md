@@ -112,7 +112,6 @@ In order to still be able to create similar results we had to build our own LSTM
 
 This brings us to the next part which made the replication difficult, the inconsistency in the code. The code below is a part of their python function called “LSTM_anomality”. It takes as inputs X_test_rnn & y_test_rn, does some things which it needs to do and then computes an average test loss and an average test accuracy which are linked to exactly the same variable which cannot be correct. After this they return acc_noise_test and acc_noise_test_rf_box while there is no noise added in this function and its output is also not used for a Random Forest as the rf suggests. These kinds of small naming errors make it difficult to understand what is happening in the code.
 
-![alt text](https://github.com/sanderboers48/ReproducibilityPaperDeepLearning48/blob/main/figures/image1.png?raw=true)
 ```python
             score_1 = clean_model.evaluate(X_test_rnn_noise_scaled, y_test_rnn, batch_size=50,verbose=0)
             iter_score.append(score_1[1])
