@@ -256,18 +256,17 @@ elif MODEL_TYPE == "PYTORCH":
             x = self.softmax(x)
             return x
 
+        def evaluate(self, X_test, y_test):
+            with torch.no_grad():
+                loss_fn = nn.BCELoss()
+                self.eval()
+                y_pred = self.forward(X_test)
+                loss = loss_fn(y_pred, y_test)
+                print(loss)
 
-    # lstm_model = nn.Sequential(
-    #     # nn.Linear(16, NUM_FEATURES),
-    #     nn.LSTM(hidden_size=160, input_size=NUM_FEATURES),
-    #     nn.BatchNorm1d(num_features=NUM_FEATURES),
-    #     nn.Dropout(p=0.2),
-    #     # nn.LSTM(hidden_size=120, input_size=(NUM_FEATURES)),
-    #     nn.BatchNorm1d(num_features=NUM_FEATURES),
-    #     nn.Dropout(p=0.2),
-    #     nn.LazyLinear(NUM_FEATURES),
-    #     nn.Softmax()
-    # )
+            return loss
+
+
 
     lstm_model = LSTMmodel()
     print(lstm_model)
