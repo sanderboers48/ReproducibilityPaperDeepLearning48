@@ -6,7 +6,7 @@ Sander Boers - 4670299 - s.h.boers@student.tudelft.nl
 
 Mathijs van Geerenstein - 4598660 - m.r.vangeerenstein@student.tudelft.nl 
 
-Tom Weinans - 4445449 - t.weimans@student.tudelft.nl
+Tom Weinans - 4445449 - t.h.weinans@student.tudelft.nl
 
 ## Abstract
 The aim of this blogpost is to describe the reproduction of the LSTM-Recurrent Neural Network proposed by Abenezer Girma et. al. [1]. This deep learning model is able to identify drivers by their driving behavior based on vehicle telematics data. Specifically, the proposed method is robust to noise and anomalies in this time-series data. In our attempt to reproduce the results, we show similar trends to Abenezer Girma et.al., but do not fully reproduce their observations. 
