@@ -2,7 +2,7 @@
 """
 @author: Abenezer
 """
-
+# check
 import os
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
@@ -33,32 +33,34 @@ from tqdm import tqdm
 # plt.ylabel('Data Points')
 # plt.xlabel('Classes')
 
-MODEL_TYPE = ["Original", "MATHIJS", "PYTORCH"][2]
-MATHIJS = False
-PYTORCH = True
-TRAINING = True
-EPOCHS = 100
-NUM_CLASSES = 4
-if MATHIJS:
+TOM = True
+TRAINING = False
+TEST_NOISE = False
+SAVE_MODEL = False #overwrites earlier saved model!!
+EPOCHS = 150
+NUM_CLASSES = 10
+NOISE_FACTOR = 2.5
+MASK_FACTOR = 0.6
+
+if TOM:
     NUM_FEATURES = 52
     df = pd.read_csv("../Datasets/Driving Data(KIA SOUL)_(150728-160714)_(10 Drivers_A-J).csv")
 else:
     NUM_FEATURES = 21
     df = pd.read_csv("../Datasets/VehicularData(anonymized).csv")
 
-
 def pre_process_encoder(df):
     print("Original dataframe size: ", df.shape)
 
-    if MATHIJS:
-        df_4 = df[df.Class.isin(['A', 'B', 'C', 'D'])]
-        print("Reduced dataframe size (4 drivers): ", df_4.shape)
-        mapping = {'A': 0, 'B': 1, 'C': 2, 'D': 3}
-        df_4 = df_4.replace({'Class': mapping})
+    if(TOM):
+        df_10 = df[df.Class.isin(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'])]
+        print("Dataframe size (4 drivers): ", df_10.shape)
+        mapping = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'I': 8, 'J': 9}
+        df_10 = df_10.replace({'Class': mapping})
 
         # 'Features and label'
-        X = df_4.drop('Class', 1)
-        y = df_4.Class
+        X = df_10.drop('Class', 1)
+        y = df_10.Class
         # print(y)
     else:
         # tom en sander meuk komt nu! :)
@@ -68,6 +70,7 @@ def pre_process_encoder(df):
         y = df.Person_Id
         print(y)
 
+
     print("X data shape (features): ", X.shape)
     print("y data shape (output classes): ", y.shape)
 
@@ -76,7 +79,7 @@ def pre_process_encoder(df):
     if 'Trip' in X.columns:
         X.drop('Trip', axis=1, inplace=True)
 
-    # mathijs addition
+    # TOM addition
     X = np.array(X)
 
     X = X[:, :NUM_FEATURES]  # reduce number of features to fit model input layer
@@ -145,7 +148,9 @@ def label_y(y_value):
 
 
 from sklearn.model_selection import train_test_split
-from tensorflow.keras.utils import to_categorical
+# from tensorflow.keras.utils import to_categorical
+from keras.utils import np_utils
+
 
 
 def rnn_dimension(X, y):
@@ -160,7 +165,9 @@ def rnn_dimension(X, y):
     X_samples, y_samples = shuffle(X_samples, y_samples)
 
     # to catagory
-    y_samples_cat = to_categorical(y_samples)
+    # y_samples_cat = tf.keras.utils.to_categorical(y_samples)
+    y_samples_cat = np_utils.to_categorical(y_samples)
+
 
     X_train_rnn, X_test_rnn, y_train_rnn, y_test_rnn = train_test_split(X_samples, y_samples_cat, train_size=0.85)
     X_train, y_train = shuffle(X_train_rnn, y_train_rnn)
@@ -188,128 +195,77 @@ def normalizing(X_test):
 
     return X_test_scaled
 
-
 clean_model = load_model('Model_clean_binary_cross_ICTAI_vehicle2_1')
 # clean_model = load_model('Model_FCNN_ICTAI_vehicle2_1')
 print(clean_model.summary())
+
 print("X_train shape: ", X_train_5.shape)
-print("X_test shape: ", X_test_5.shape)
+print("Normalizing LSTM train/test data")
+X_train_normalized = normalizing(X_train_5)
+
+# X_test_normalized = normalizing(X_test_5) #dont do before adding noise??
+X_test_normalized = np.copy(X_test_5) #only scale X_test after adding noise!
+
+print("X_train shape: ", X_train_normalized.shape)
+print("X_test shape: ", X_test_normalized.shape)
+print("y_train shape: ", y_train_5.shape)
 print("y_train shape: ", y_train_5.shape)
 print("y_test shape: ", y_test_5.shape)
 
-if MODEL_TYPE == "MATHIJS":
-    mathijs_model = tf.keras.Sequential()
-    mathijs_model.add(tf.keras.layers.Input(shape=(None, NUM_FEATURES)))
-    mathijs_model.add(tf.keras.layers.LSTM(160, input_shape=(None, NUM_FEATURES), return_sequences=True))
-    mathijs_model.add(tf.keras.layers.BatchNormalization())
-    mathijs_model.add(tf.keras.layers.Dropout(.2))
-    mathijs_model.add(tf.keras.layers.LSTM(120, input_shape=(NUM_FEATURES,)))
-    mathijs_model.add(tf.keras.layers.BatchNormalization())
-    mathijs_model.add(tf.keras.layers.Dropout(.2))
-    mathijs_model.add(tf.keras.layers.Dense(NUM_CLASSES))
-    mathijs_model.add(tf.keras.layers.Softmax())
-    print(mathijs_model.summary())
-    lstm_model = tf.keras.models.clone_model(mathijs_model)
-
-elif MODEL_TYPE == "PYTORCH":
-    class LSTMmodel(torch.nn.Module):
-
-        def __init__(self):
-            super(LSTMmodel, self).__init__()
-
-            self.lstm1 = nn.LSTM(hidden_size=160, input_size=NUM_FEATURES)
-            self.batchNorm1 = nn.LazyBatchNorm1d()
-            self.dropout1 = nn.Dropout(p=0.2)
-            self.lstm2 = nn.LSTM(hidden_size=120, input_size=160)
-            self.batchNorm2 = nn.BatchNorm1d(num_features=16)
-            self.dropout2 = nn.Dropout(p=0.2)
-            self.linear1 = nn.LazyLinear(NUM_CLASSES)
-            self.softmax = nn.Softmax(dim=1)
-
-        def forward(self, x):
-            x, _ = self.lstm1(x)
-            # x = self.batchNorm1(x)
-            x = self.dropout1(x)
-            x, _ = self.lstm2(x)
-            x = self.batchNorm2(x)
-            x = self.dropout2(x)
-            x = self.linear1(x)
-            x = self.softmax(x)
-            return x
+if TOM:
+    TOM_model = tf.keras.Sequential()
+    TOM_model.add(tf.keras.layers.Input(shape=(None,NUM_FEATURES)))
+    TOM_model.add(tf.keras.layers.LSTM(160, input_shape=(None,NUM_FEATURES), return_sequences=True))
+    TOM_model.add(tf.keras.layers.BatchNormalization())
+    TOM_model.add(tf.keras.layers.Dropout(.2))
+    TOM_model.add(tf.keras.layers.LSTM(120, input_shape=(NUM_FEATURES,)))
+    TOM_model.add(tf.keras.layers.BatchNormalization())
+    TOM_model.add(tf.keras.layers.Dropout(.2))
+    TOM_model.add(tf.keras.layers.Dense(NUM_CLASSES))
+    TOM_model.add(tf.keras.layers.Softmax())
+    print(TOM_model.summary())
+    lstm_model = tf.keras.models.clone_model(TOM_model)
 
 
-    # lstm_model = nn.Sequential(
-    #     # nn.Linear(16, NUM_FEATURES),
-    #     nn.LSTM(hidden_size=160, input_size=NUM_FEATURES),
-    #     nn.BatchNorm1d(num_features=NUM_FEATURES),
-    #     nn.Dropout(p=0.2),
-    #     # nn.LSTM(hidden_size=120, input_size=(NUM_FEATURES)),
-    #     nn.BatchNorm1d(num_features=NUM_FEATURES),
-    #     nn.Dropout(p=0.2),
-    #     nn.LazyLinear(NUM_FEATURES),
-    #     nn.Softmax()
-    # )
-
-    lstm_model = LSTMmodel()
-    print(lstm_model)
 else:
     lstm_model = tf.keras.models.clone_model(clean_model)
 
-print("----------------------")
-print("training lstm model")
-
-if MODEL_TYPE == 'PYTORCH':
-    lstm_model.double()
-    loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(lstm_model.parameters(), lr=5e-4)
 
 
-
-    for epoch in range(EPOCHS):
-        lstm_model.train()
-        optimizer.zero_grad()
-
-        outputs = lstm_model.forward(torch.from_numpy(X_train_5).double())
-        loss = loss_fn(outputs, torch.from_numpy(y_train_5).long())
-
-        loss.backward()
-        optimizer.step()
-
-        with torch.no_grad():
-            lstm_model.eval()
-            y_pred = lstm_model(torch.from_numpy(X_test_5).double())
-            test_loss = loss_fn(y_pred, torch.from_numpy(y_test_5).long())
-
-
-        print(f"current loss = {loss.item()}, test loss = {test_loss.item()}")
-
-
-
-else:
-    lstm_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
-                       loss=tf.keras.losses.BinaryCrossentropy(),
-                       metrics=[tf.keras.metrics.BinaryAccuracy()])
-    if MATHIJS:
-        lstm_model.fit(X_train_5, y_train_5, epochs=EPOCHS)
+lstm_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+                    loss=tf.keras.losses.BinaryCrossentropy(),
+                    metrics=['accuracy'])
+if TOM:
+    if TRAINING:
+        print("----------------------")
+        print("training lstm model")
+        lstm_model.fit(X_train_normalized, y_train_5, epochs=EPOCHS)
+        if SAVE_MODEL:
+            lstm_model.save("group48_model")
     else:
-        if TRAINING:
-            lstm_model.fit(X_train_5, y_train_5, epochs=EPOCHS)
-        else:
-            pass
-
-print("----- compare ground truth with model")
-print(y_test_5[0, :])
-X_test_5 = np.asarray(X_test_5).astype('float32')
-if MODEL_TYPE != 'PYTORCH':
-    print(lstm_model.predict(np.expand_dims(X_test_5[0, :, :], axis=0)))
-
-    X_test_normalized = normalizing(X_test_5)
-    # score = clean_model.evaluate(X_test_normalized, y_test_5, batch_size=50)
-    score = lstm_model.evaluate(X_test_5, y_test_5, batch_size=50)
-    print('Test loss:', score[0])
-    print('Test accuracy:', score[-1])
+        print("----------------------")
+        print("loading group48 lstm model")
+        lstm_model = tf.keras.models.load_model("group48_model")
 else:
-    pass
+    if TRAINING:
+        print("----------------------")
+        print("training lstm model")
+        lstm_model.fit(X_train_normalized, y_train_5, epochs=EPOCHS) #fit on the papers pretrained model
+    else:
+        print("----------------------")
+        print("loading paper's lstm model")
+        pass #use the paper's pretrained model
+
+
+
+
+# # score = clean_model.evaluate(X_test_normalized, y_test_5, batch_size=50)
+# score = lstm_model.evaluate(X_test_normalized, y_test_5, batch_size=50)
+# # score = lstm_model.evaluate(X_test_5, y_test_5, batch_size=50)
+# print('Test loss:', score[0])
+# print('Test accuracy:', score[-1])
+
+
 
 anomality_level = [0, 0.05, 0.1, 0.2, 0.4, 0.6, 0.8]
 
@@ -323,14 +279,25 @@ def LSTM_anomality(X_test_rnn, y_test_rnn):
         print("=" * 5)
         print("for anomaly percentage = ", anomaly)
 
-        def anomality(X, ):
-            orgi_data = np.copy(X_test_5.reshape(-1, NUM_FEATURES))
+        def anomality(X, ): 
+            orgi_data = np.copy(X_test_rnn.reshape(-1,NUM_FEATURES))
+            print(orgi_data.shape)
 
-            mask = np.random.choice(orgi_data.shape[0], int(len(orgi_data) * .5), replace=False)
+            mask = np.random.choice(orgi_data.shape[0], int(len(orgi_data) *MASK_FACTOR), replace=False) # original mask. shape (samples*0.5,)
+            # mask = np.random.choice(orgi_data.shape[0], int(len(orgi_data) * 1), replace=False)  # self-made mask shape (samples*0.5,)
+            # print(orgi_data.shape)
+            # print(mask.shape)
             # orgi_data[mask].shape
 
-            orgi_data[mask] = orgi_data[mask] + orgi_data[mask] * anomaly
 
+
+
+            if TEST_NOISE: # use noise instead of anomality
+                std = anomaly * NOISE_FACTOR #to scale to a maximum noise std of 2
+                noise_vector = np.random.normal(loc=0, scale=std, size=(orgi_data.shape[0], NUM_FEATURES))
+                orgi_data = orgi_data + noise_vector
+            else:
+                orgi_data[mask] = orgi_data[mask] + orgi_data[mask] * anomaly
             return orgi_data
 
         def normalizing(X_test):
@@ -349,13 +316,14 @@ def LSTM_anomality(X_test_rnn, y_test_rnn):
 
         iter_score = []
         for i in range(5):
-            X_test_rnn_anomal = np.copy(anomality(X_test_rnn).reshape(-1, X_test_5.shape[1], X_test_5.shape[2]))
-
+            X_test_rnn_anomal = np.copy(anomality(X_test_rnn).reshape(-1, X_test_rnn.shape[1], X_test_rnn.shape[2]))
             X_test_rnn_noise_scaled = normalizing(X_test_rnn_anomal)
 
             # pd.DataFrame(noising2(X_train.reshape(-1,49)))[1].head(1000).plot(kind='line')
 
-            # score_1 = clean_model.evaluate(X_test_rnn_noise_scaled, y_test_rnn, batch_size=50,verbose=0)
+            # score_1 = lstm_model.evaluate(X_test_rnn_anomal, y_test_rnn, batch_size=50, verbose=0) # not scaled
+            score_1 = lstm_model.evaluate(X_test_rnn_noise_scaled, y_test_rnn, batch_size=50, verbose=0) # original
+            print(score_1)
             if MODEL_TYPE != 'PYTORCH':
                 score_1 = lstm_model.evaluate(X_test_rnn_anomal, y_test_rnn, batch_size=50, verbose=0)
             else:
@@ -365,7 +333,7 @@ def LSTM_anomality(X_test_rnn, y_test_rnn):
             iter_score.append(score_1[1])  # accuracy
         #             print(score_1[1])
 
-        # sorry i don't know what happened here - Mathijs
+        #sorry i don't know what happened here - TOM
         dif = max(iter_score) - min(iter_score)
         score_2 = sum(iter_score) / len(iter_score)
         acc_noise_test.append(score_2)
@@ -376,7 +344,7 @@ def LSTM_anomality(X_test_rnn, y_test_rnn):
     return acc_noise_test, acc_noise_test_rf_box
 
 
-LSTM_acc_noise_test, LSTM_noise_acc_box = LSTM_anomality(X_test_5, y_test_5)
+LSTM_acc_noise_test, LSTM_noise_acc_box = LSTM_anomality(X_test_normalized, y_test_5)
 acc = []
 fig1 = plt.figure()
 for n in range(len(LSTM_acc_noise_test)):
@@ -399,10 +367,16 @@ def normalizing_2d(X):
 def anomality_2d(X, anomaly):
     X = np.array(X).reshape(-1, NUM_FEATURES)
 
-    mask = np.random.choice(X.shape[0], int(len(X) * .4), replace=False)
-    # orgi_data[mask].shape
+    mask = np.random.choice(X.shape[0], int(len(X) * MASK_FACTOR), replace=False) #original masking
 
-    X[mask] = X[mask] + X[mask] * anomaly
+    # mask = np.random.choice(X.shape[0], int(len(X) * 1), replace=False) #mask up to all samples
+
+    if TEST_NOISE:
+        std = anomaly*NOISE_FACTOR
+        noise_vector = np.random.normal(loc=0, scale=std, size=(X.shape[0], NUM_FEATURES))
+        X = X + noise_vector
+    else:
+        X[mask] = X[mask] + X[mask] * anomaly
 
     return X
 
@@ -412,7 +386,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.85, shuff
 from keras.utils import np_utils
 from sklearn.preprocessing import StandardScaler
 
-# mathijs beun begint weer
+# TOM beun begint weer
 y_dummy = np_utils.to_categorical(y)
 
 from keras.models import Sequential
@@ -599,16 +573,24 @@ plt.errorbar(anomality_level, acc_rf, rf_noise_acc_box, fmt='.k', color='black',
 
 # mpl.style.use('seaborn-poster')
 fig2 = plt.figure()
-plt.axis([-0.07, .82, 0, 1.08])
 # anomality_level = [0,0.2,0.4,0.6,0.8,1]
 # noise_sig = anomality_level 
+noise_level = np.array(anomality_level[:10])*NOISE_FACTOR
 
-plt.plot(anomality_level[:10], acc[:10], marker='^', label="LSTM", linewidth=3.5)
-plt.plot(anomality_level[:10], acc_mlp[:10], marker='o', label="FCNN", linewidth=3.5)
-plt.plot(anomality_level[:10], acc_dt[:10], marker='*', label="Decision Tree", linewidth=3.5)
-plt.plot(anomality_level[:10], acc_rf[:10], marker='x', label="Random Forest", linewidth=3.5)
-
-plt.xlabel("Percentage of sensor anomalities induced in the data (*100)", fontsize=16)
+if TEST_NOISE:
+    plt.axis([-0.07, noise_level[-1]+0.1, 0, 1.08])
+    plt.plot(noise_level, acc[:10], marker='^', label="LSTM", linewidth=3.5)
+    plt.plot(noise_level, acc_mlp[:10], marker='o', label="FCNN", linewidth=3.5)
+    plt.plot(noise_level, acc_dt[:10], marker='*', label="Decision Tree", linewidth=3.5)
+    plt.plot(noise_level, acc_rf[:10], marker='x', label="Random Forest", linewidth=3.5)
+    plt.xlabel("STD of sensor noise induced in the data ", fontsize=16)
+else:
+    plt.axis([-0.07, .82, 0, 1.08])
+    plt.plot(anomality_level[:10], acc[:10], marker='^', label="LSTM", linewidth=3.5)
+    plt.plot(anomality_level[:10], acc_mlp[:10], marker='o', label="FCNN", linewidth=3.5)
+    plt.plot(anomality_level[:10], acc_dt[:10], marker='*', label="Decision Tree", linewidth=3.5)
+    plt.plot(anomality_level[:10], acc_rf[:10], marker='x', label="Random Forest", linewidth=3.5)
+    plt.xlabel("Percentage of sensor anomalities induced in the data (*100)", fontsize=12)
 plt.ylabel("accuracy", fontsize=20)
 # plt.title("Accuracy on noisy data")
 plt.legend(loc=3, fontsize=16)
