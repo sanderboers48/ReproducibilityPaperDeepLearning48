@@ -27,16 +27,16 @@ from keras.utils.vis_utils import plot_model
 # plt.ylabel('Data Points')
 # plt.xlabel('Classes')
 
-TOM = True
-TRAINING = False
-TEST_NOISE = False
+KIA = True #if false: using VehicularData(anonymized) set
+TRAINING = True
+TEST_NOISE = True
 SAVE_MODEL = False #overwrites earlier saved model!!
-EPOCHS = 150
+EPOCHS = 15
 NUM_CLASSES = 10
 NOISE_FACTOR = 2.5
 MASK_FACTOR = 0.6
 
-if TOM:
+if KIA:
     NUM_FEATURES = 52
     df = pd.read_csv("../Datasets/Driving Data(KIA SOUL)_(150728-160714)_(10 Drivers_A-J).csv")
 else:
@@ -46,7 +46,7 @@ else:
 def pre_process_encoder(df):
     print("Original dataframe size: ", df.shape)
 
-    if(TOM):
+    if(KIA):
         df_10 = df[df.Class.isin(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'])]
         print("Dataframe size (4 drivers): ", df_10.shape)
         mapping = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'I': 8, 'J': 9}
@@ -190,7 +190,7 @@ def normalizing(X_test):
 
             return X_test_scaled
 
-clean_model = load_model('Model_clean_binary_cross_ICTAI_vehicle2_1')
+clean_model = load_model('Model_clean_binary_cross_ICTAI_vehicle2_1.h5')
 # clean_model = load_model('Model_FCNN_ICTAI_vehicle2_1')
 print(clean_model.summary())
 
@@ -205,19 +205,19 @@ print("X_test shape: ", X_test_normalized.shape)
 print("y_train shape: ", y_train_5.shape)
 print("y_test shape: ", y_test_5.shape)
 
-if TOM:
-    TOM_model = tf.keras.Sequential()
-    TOM_model.add(tf.keras.layers.Input(shape=(None,NUM_FEATURES)))
-    TOM_model.add(tf.keras.layers.LSTM(160, input_shape=(None,NUM_FEATURES), return_sequences=True))
-    TOM_model.add(tf.keras.layers.BatchNormalization())
-    TOM_model.add(tf.keras.layers.Dropout(.2))
-    TOM_model.add(tf.keras.layers.LSTM(120, input_shape=(NUM_FEATURES,)))
-    TOM_model.add(tf.keras.layers.BatchNormalization())
-    TOM_model.add(tf.keras.layers.Dropout(.2))
-    TOM_model.add(tf.keras.layers.Dense(NUM_CLASSES))
-    TOM_model.add(tf.keras.layers.Softmax())
-    print(TOM_model.summary())
-    lstm_model = tf.keras.models.clone_model(TOM_model)
+if KIA:
+    KIA_model = tf.keras.Sequential()
+    KIA_model.add(tf.keras.layers.Input(shape=(None,NUM_FEATURES)))
+    KIA_model.add(tf.keras.layers.LSTM(160, input_shape=(None,NUM_FEATURES), return_sequences=True))
+    KIA_model.add(tf.keras.layers.BatchNormalization())
+    KIA_model.add(tf.keras.layers.Dropout(.2))
+    KIA_model.add(tf.keras.layers.LSTM(120, input_shape=(NUM_FEATURES,)))
+    KIA_model.add(tf.keras.layers.BatchNormalization())
+    KIA_model.add(tf.keras.layers.Dropout(.2))
+    KIA_model.add(tf.keras.layers.Dense(NUM_CLASSES))
+    KIA_model.add(tf.keras.layers.Softmax())
+    print(KIA_model.summary())
+    lstm_model = tf.keras.models.clone_model(KIA_model)
 
 
 else:
@@ -228,7 +228,7 @@ else:
 lstm_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
                     loss=tf.keras.losses.BinaryCrossentropy(),
                     metrics=['accuracy'])
-if TOM:
+if KIA:
     if TRAINING:
         print("----------------------")
         print("training lstm model")
