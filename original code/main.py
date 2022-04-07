@@ -22,6 +22,7 @@ from keras.utils.vis_utils import plot_model
 import torch
 from torch.utils.data import DataLoader
 from torch import nn
+from sklearn.metrics import accuracy_score
 
 
 'Read the file'
@@ -33,13 +34,13 @@ from torch import nn
 # plt.ylabel('Data Points')
 # plt.xlabel('Classes')
 
-KIA = True
+KIA = False
 MODEL_TYPE = ["Original", "TOM", "PYTORCH"][2]
 TRAINING = False
 TEST_NOISE = False
 SAVE_MODEL = False #overwrites earlier saved model!!
-EPOCHS = 150
-NUM_CLASSES = 10
+EPOCHS = 100
+NUM_CLASSES = 4
 NOISE_FACTOR = 2.5
 MASK_FACTOR = 0.6
 
@@ -236,7 +237,7 @@ elif MODEL_TYPE == "PYTORCH":
         def __init__(self):
             super(LSTMmodel, self).__init__()
 
-            self.lstm1 = nn.LSTM(hidden_size=160, input_size=NUM_FEATURES)
+            self.lstm1 = nn.LSTM(hidden_size=160, batch_first=False, input_size=NUM_FEATURES)
             self.batchNorm1 = nn.LazyBatchNorm1d()
             self.dropout1 = nn.Dropout(p=0.2)
             self.lstm2 = nn.LSTM(hidden_size=120, input_size=160)
@@ -256,15 +257,29 @@ elif MODEL_TYPE == "PYTORCH":
             x = self.softmax(x)
             return x
 
-        def evaluate(self, X_test, y_test):
+        def evaluate(self, X_test, y_test, batch_size, verbose):
             with torch.no_grad():
                 loss_fn = nn.BCELoss()
                 self.eval()
-                y_pred = self.forward(X_test)
-                loss = loss_fn(y_pred, y_test)
-                print(loss)
+                y_pred = self.forward(torch.from_numpy(X_test).double())
+                y_pred = y_pred.numpy()
+                print("y_pred shape:", y_pred.shape)
+                print("y_test shape:", y_test.shape)
 
-            return loss
+                y_pred = np.mean(y_pred, axis=1)
+                print("y_pred shape:", y_pred.shape)
+                print("y_test shape:", y_test.shape)
+
+                y_pred = np.argmax(y_pred, axis=1)
+                y_test = np.argmax(y_test, axis=1)
+                print("evaluating pytorch...")
+                print("y_pred shape:", y_pred.shape)
+                print("y_test shape:", y_test.shape)
+                accuracy = accuracy_score(y_test, y_pred)
+
+                loss=0
+
+            return np.array([loss, accuracy])
 
 
 
@@ -291,6 +306,28 @@ if MODEL_TYPE=='TOM':
         print("----------------------")
         print("loading group48 lstm model")
         lstm_model = tf.keras.models.load_model("group48_model")
+
+elif MODEL_TYPE=='PYTORCH':
+    lstm_model.double()
+    loss_fn = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(lstm_model.parameters(), lr=5e-2)
+
+    for epoch in range(EPOCHS):
+        # lstm_model.train()
+        # set gradients to zero
+        optimizer.zero_grad()
+
+        outputs = lstm_model.forward(torch.from_numpy(X_train_normalized).double())
+        loss = loss_fn(outputs, torch.from_numpy(y_train_5).long())
+        loss.backward()
+        optimizer.step()
+
+        with torch.no_grad():
+            lstm_model.eval()
+            y_pred = lstm_model(torch.from_numpy(X_test_5).double())
+            test_loss = loss_fn(y_pred, torch.from_numpy(y_test_5).long())
+
+        print(f"current loss = {loss.item()}, test loss = {test_loss.item()}")
 else:
     if TRAINING:
         print("----------------------")
