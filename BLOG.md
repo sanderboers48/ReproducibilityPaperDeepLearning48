@@ -3,7 +3,9 @@
 
 Authors:  
 Sander Boers - 4670299 - s.h.boers@student.tudelft.nl
+
 Mathijs van Geerenstein - 4598660 - m.r.vangeerenstein@student.tudelft.nl 
+
 Tom Weinans - 4445449 - t.weimans@student.tudelft.nl
 
 ## Abstract
