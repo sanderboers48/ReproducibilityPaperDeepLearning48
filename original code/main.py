@@ -31,7 +31,7 @@ KIA = True #if false: using VehicularData(anonymized) set
 TRAINING = False #if false will load model
 TEST_NOISE = True
 SAVE_MODEL = False #overwrites earlier saved model!!
-SAVE_FIG = False #overwrites earlier saved figure
+SAVE_FIG = True #overwrites earlier saved figure
 if KIA:
     save_model_name = "group48_model_KIA"
 else:
@@ -39,7 +39,7 @@ else:
 
 
 
-EPOCHS = 25
+EPOCHS = 5
 NUM_CLASSES = 10
 NOISE_FACTOR = 2.5
 MASK_FACTOR = 0.6
@@ -65,12 +65,27 @@ def pre_process_encoder(df):
         y = df_10.Class
         # print(y)
     else:
-        # tom en sander meuk komt nu! :)
         df = df.iloc[:85095, [1, 10, 11, 12, 13, 14, 16, 19, 20, 22, 26, 27, 29, 31, 32, 33, 35, 36, 38, 40, 41, 42]]
         'Features and label'
         X = df.drop('Person_Id',1)
         y = df.Person_Id
         print(y)
+        # tom en sander meuk komt nu! :)
+        # df_10 = df.iloc[:85095, :]
+        # df_10 = df_10.drop('Reaction_Time', 1)
+        # df_10 = df_10.drop('Device_Time', 1)
+        # df_10 = df_10.drop('GPS_Time', 1)
+        # df_10 = df_10.drop('Device_Cost_Km_Inst', 1)
+        # df_10 = df_10.drop('Trip', 1)
+        # df_10 = df_10.drop('GPS_Long', 1)
+        # df_10 = df_10.drop('GPS_Lat', 1)
+        # df_10 = df_10.drop('GPS_HDOP', 1)
+        # df_10 = df_10.drop('GPS_Bearing', 1)
+        # # 'Features and label'
+        # X = df_10.drop('Person_Id',1)
+        # y = df_10.Person_Id
+        # print(y)
+
 
 
     print("X data shape (features): ", X.shape)
@@ -632,8 +647,12 @@ if TEST_NOISE:
     plt.xlabel("STD of sensor noise induced in the data ", fontsize=16)
     if SAVE_FIG:
         if KIA:
+            plt.legend(loc=3, fontsize=16)
+            plt.ylabel("accuracy", fontsize=20)
             plt.savefig('KIA.png')
         else:
+            plt.legend(loc=3, fontsize=16)
+            plt.ylabel("accuracy", fontsize=20)
             plt.savefig('VehicularData.png')
 else:
     plt.axis([-0.07, .82, 0, 1.08])
