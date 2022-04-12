@@ -45,6 +45,14 @@ This section shows our attempts in reproducing the comparison of the proposed LS
 
 ### Reproduction
 
+| **Hyperparameters** |                    |
+|---------------------|-------------------:|
+| Epochs              |                 25 |
+| Learning Rate       |               1e-3 |
+| Optimizer           |               Adam |
+| Criterion           | BinaryCrossEntropy |
+
+
 ```python
 model = tf.keras.Sequential()
 model.add(tf.keras.layers.Input(shape=(None,NUM_FEATURES)))
