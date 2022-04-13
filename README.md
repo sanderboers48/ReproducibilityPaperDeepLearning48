@@ -44,6 +44,8 @@ Additionally, the proposed method is evaluated by training on noisy sensor data,
 This section shows our attempts in reproducing the comparison of the proposed LSTM model with three other methods: a fully connected neural network (FCNN), a decision tree and a random forest. 
 
 ### Reproduction
+In this subsection an attempt was made to reproduce the figures in the paper. We have tried to do so using the code provided on the github mentioned in the paper, however the pre-trained model which is provided there did not use the (full) dataset (more on this in the discussion). Because of this we have retrained the model with parameters that fit the full dataset, the details of which are shown below. 
+
 
 | **Hyperparameters** |                    |
 |---------------------|-------------------:|
