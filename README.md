@@ -70,8 +70,11 @@ lstm_model = tf.keras.models.clone_model(model)
 ```
 
 ![alt text](https://github.com/sanderboers48/ReproducibilityPaperDeepLearning48/blob/main/figures/image2.png?raw=true)
+The plot above shows our result of the reproduction. As can be seen LSTM still performs best, compard to the other three. However the decay of this line is more prominent than the in the plot of the paper. The reason for this can be read in the discussion.
+
 
 ![alt text](https://github.com/sanderboers48/ReproducibilityPaperDeepLearning48/blob/main/figures/image3.png?raw=true)
+This barplot also shows that LSTM has the best accuracy for training and testing with noise. But the accuracy shown in the paper, is not achieved. Reasons can also be found in the discussions.
 
 ### New data
 In addition to the reproduced results the choice was made to also check this implementation while training on a different dataset. For this the Vehicular-trace dataset [2] is used. This dataset consists of two parts. The first part has 10 different drivers and the second part has 4 different drivers. In order to compare this new dataset with the original we have used the first part of this dataset with 10 drivers and 21 comparable features. Training the LSTM, FCNN, Decision Tree and Random Forest on this dataset yields the following result for the accuracy vs noise induced data:
