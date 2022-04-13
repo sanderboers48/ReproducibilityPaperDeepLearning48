@@ -70,10 +70,12 @@ lstm_model = tf.keras.models.clone_model(model)
 ```
 
 ![alt text](https://github.com/sanderboers48/ReproducibilityPaperDeepLearning48/blob/main/figures/image2.png?raw=true)
+
 The plot above shows our result of the reproduction. As can be seen LSTM still performs best, compard to the other three. However the decay of this line is more prominent than the in the plot of the paper. The reason for this can be read in the discussion.
 
 
 ![alt text](https://github.com/sanderboers48/ReproducibilityPaperDeepLearning48/blob/main/figures/image3.png?raw=true)
+
 This barplot also shows that LSTM has the best accuracy for training and testing with noise. But the accuracy shown in the paper, is not achieved. Reasons can also be found in the discussions.
 
 ### New data
